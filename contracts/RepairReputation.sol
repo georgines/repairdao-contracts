@@ -18,12 +18,23 @@ interface IRepairDeposit {
     function updateRate(address user, uint256 newRate) external;
 }
 
+// Interface for the reputation contract itself
+interface IRepairReputation {
+    function registerUser(address user) external;
+    function rate(address rated, uint8 rating, uint256 serviceId) external;
+    function rateFrom(address rater, address rated, uint8 rating, uint256 serviceId) external;
+    function penalize(address user) external;
+    function reward(address user) external;
+    function getLevel(address user) external view returns (uint8);
+    function getUserRate(address user) external view returns (uint256);
+}
+
 // Contract that manages reputation and trust levels of technicians and clients
-contract RepairReputation is Ownable {
+contract RepairReputation is Ownable, IRepairReputation {
 
     // Contract addresses
-    IRepairBadge public repairBadge;
-    IRepairDeposit public repairDeposit;
+    IRepairBadge public immutable repairBadge;
+    IRepairDeposit public immutable repairDeposit;
 
     // Authorized contracts that can call reputation functions
     mapping(address => bool) public authorizedContracts;

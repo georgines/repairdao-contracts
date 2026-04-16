@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Interface to interact with RepairDeposit contract
 interface IRepairDepositEscrow {
@@ -22,10 +23,11 @@ interface IRepairReputationEscrow {
 
 // Contract that manages secure payments between clients and technicians
 contract RepairEscrow is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
 
-    IERC20 public repairToken;
-    IRepairDepositEscrow public repairDeposit;
-    IRepairReputationEscrow public repairReputation;
+    IERC20 public immutable repairToken;
+    IRepairDepositEscrow public immutable repairDeposit;
+    IRepairReputationEscrow public immutable repairReputation;
 
     // Voting period for disputes (1 day)
     uint256 public votingPeriod = 1 days;
@@ -116,6 +118,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
     event VoteCast(uint256 indexed id, address indexed voter, bool supportOpener);
     event DisputeResolved(uint256 indexed id, address winner, uint256 votesForOpener, uint256 votesForOpposing);
     event PaymentReleased(uint256 indexed id, address indexed recipient, uint256 amount);
+    event SlashPercentUpdated(uint256 newPercent);
 
     // Constructor
     constructor(
@@ -177,7 +180,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         require(order.state == ServiceState.Budgeted, "No budget submitted");
 
         // Lock payment in escrow
-        repairToken.transferFrom(msg.sender, address(this), order.amount);
+        repairToken.safeTransferFrom(msg.sender, address(this), order.amount);
 
         order.state = ServiceState.InProgress;
 
@@ -204,7 +207,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         order.completedAt = block.timestamp;
 
         // Release payment to technician
-        repairToken.transfer(order.technician, order.amount);
+        repairToken.safeTransfer(order.technician, order.amount);
 
         emit CompletionConfirmed(orderId, msg.sender);
         emit PaymentReleased(orderId, order.technician, order.amount);
@@ -337,7 +340,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         address loser = openerWins ? dispute.opposingParty : dispute.openedBy;
 
         // Release payment to winner
-        repairToken.transfer(winner, order.amount);
+        repairToken.safeTransfer(winner, order.amount);
 
         // Slash loser deposit and penalize reputation
         repairDeposit.slash(loser, slashPercent);
@@ -395,5 +398,6 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
     function setSlashPercent(uint256 percent) external onlyOwner {
         require(percent > 0 && percent <= 50, "Invalid percent");
         slashPercent = percent;
+        emit SlashPercentUpdated(percent);
     }
 }

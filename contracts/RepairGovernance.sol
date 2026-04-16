@@ -13,10 +13,10 @@ interface IRepairDepositGov {
 contract RepairGovernance is Ownable {
 
     // Token used for voting
-    IERC20 public repairToken;
+    IERC20 public immutable repairToken;
 
     // Deposit contract to verify active users
-    IRepairDepositGov public repairDeposit;
+    IRepairDepositGov public immutable repairDeposit;
 
     // Total number of proposals
     uint256 public totalProposals;
@@ -46,6 +46,7 @@ contract RepairGovernance is Ownable {
     event ProposalCreated(uint256 indexed id, address indexed proposer, string description, uint256 deadline);
     event VoteCast(uint256 indexed id, address indexed voter, bool support, uint256 votingPower);
     event ProposalExecuted(uint256 indexed id, bool approved);
+    event QuorumUpdated(uint256 newQuorum);
 
     // Constructor
     constructor(address _token, address _deposit) Ownable(msg.sender) {
@@ -125,5 +126,6 @@ contract RepairGovernance is Ownable {
     // Owner updates quorum
     function setQuorum(uint256 newQuorum) external onlyOwner {
         quorum = newQuorum;
+        emit QuorumUpdated(newQuorum);
     }
 }

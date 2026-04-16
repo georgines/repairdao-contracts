@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Interface to interact with RepairBadge contract
 interface IRepairBadgeDeposit {
@@ -15,6 +16,19 @@ interface IRepairBadgeDeposit {
 interface IRepairReputationDeposit {
     function registerUser(address user) external;
     function getLevel(address user) external view returns (uint8);
+}
+
+// Interface for the deposit contract itself
+interface IRepairDeposit {
+    function deposit(uint256 amount, bool isTechnician) external;
+    function getRewards(address user) external view returns (uint256);
+    function withdrawRewards() external;
+    function withdrawDeposit() external;
+    function slash(address user, uint256 percent) external;
+    function updateRate(address user, uint256 newRate) external;
+    function isActive(address user) external view returns (bool);
+    function setMinDeposit(uint256 newMin) external;
+    function setSlashPercent(uint256 percent) external;
 }
 
 // Interface to interact with Chainlink price feed
@@ -29,15 +43,16 @@ interface AggregatorV3Interface {
 }
 
 // Contract that manages deposits and rewards for technicians and clients
-contract RepairDeposit is Ownable, ReentrancyGuard {
+contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
+    using SafeERC20 for IERC20;
 
     // Token used for deposits
-    IERC20 public repairToken;
+    IERC20 public immutable repairToken;
 
     // External contracts
-    IRepairBadgeDeposit public repairBadge;
+    IRepairBadgeDeposit public immutable repairBadge;
     IRepairReputationDeposit public repairReputation;
-    AggregatorV3Interface public priceFeed;
+    AggregatorV3Interface public immutable priceFeed;
 
     // Authorized contracts that can call slash and updateRate
     mapping(address => bool) public authorizedContracts;
@@ -72,6 +87,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
     event RateUpdated(address indexed user, uint256 newRate);
     event MinDepositUpdated(uint256 newMin);
     event RepairReputationUpdated(address indexed newReputation);
+    event SlashPercentUpdated(uint256 newPercent);
 
     // Constructor
     constructor(
@@ -123,7 +139,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
         require(amount >= minDeposit, "Below minimum deposit");
         require(!deposits[msg.sender].active, "Already has active deposit");
 
-        repairToken.transferFrom(msg.sender, address(this), amount);
+        repairToken.safeTransferFrom(msg.sender, address(this), amount);
 
         deposits[msg.sender] = DepositData({
             amount: amount,
@@ -155,11 +171,13 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
 
         // Adjust reward based on ETH/USD price
         int256 ethPrice = getEthUsdPrice();
-        uint256 baseReward = (data.amount * annualRate * timeElapsed) / (365 days * 10000);
+        uint256 baseReward = data.amount * annualRate * timeElapsed;
 
-        // Multiply by 2000/ethPrice to adjust for ETH value
+        // Multiply before dividing to preserve precision
         if (ethPrice > 0) {
-            baseReward = (baseReward * 2000 * 10 ** 8) / uint256(ethPrice);
+            baseReward = (baseReward * 2000 * 10 ** 8) / (365 days * 10000 * uint256(ethPrice));
+        } else {
+            baseReward = baseReward / (365 days * 10000);
         }
 
         return baseReward;
@@ -184,7 +202,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
 
         deposits[msg.sender].lastClaimedAt = block.timestamp;
 
-        repairToken.transfer(msg.sender, rewards);
+        repairToken.safeTransfer(msg.sender, rewards);
 
         emit RewardsClaimed(msg.sender, rewards);
     }
@@ -216,7 +234,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
         }
 
         // Transfer deposit + rewards
-        repairToken.transfer(msg.sender, amount + rewards);
+        repairToken.safeTransfer(msg.sender, amount + rewards);
 
         emit DepositWithdrawn(msg.sender, amount + rewards);
     }
@@ -230,7 +248,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
         deposits[user].amount -= slashAmount;
 
         // Transfer slashed tokens to contract owner (platform)
-        repairToken.transfer(owner(), slashAmount);
+        repairToken.safeTransfer(owner(), slashAmount);
 
         emit UserSlashed(user, slashAmount);
     }
@@ -261,5 +279,6 @@ contract RepairDeposit is Ownable, ReentrancyGuard {
     function setSlashPercent(uint256 percent) external onlyOwner {
         require(percent > 0 && percent <= 50, "Invalid percent");
         slashPercent = percent;
+        emit SlashPercentUpdated(percent);
     }
 }
