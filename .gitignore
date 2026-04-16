@@ -1,6 +1,6 @@
 node_modules
 .env
-./github
+/.github
 
 deployments/local.json
 deployments/sepolia.json
