@@ -80,4 +80,34 @@ describe("Resultado dos votantes na disputa", () => {
     expect(resolvedOrder.client).to.equal(client.address);
     expect(resolvedOrder.technician).to.equal(technician.address);
   });
+
+  it("deve reduzir a reputacao da parte perdedora e dos votantes do lado perdedor", async () => {
+    const { technician, voter1, voter2, reputation, escrow } = await createDisputeAndVote(true);
+
+    for (let index = 0; index < 5; index++) {
+      await reputation.reward(technician.address);
+      await reputation.reward(voter2.address);
+    }
+
+    const technicianBefore = await reputation.getReputation(technician.address);
+    const voter2Before = await reputation.getReputation(voter2.address);
+
+    expect(technicianBefore.level).to.equal(2);
+    expect(technicianBefore.totalPoints).to.equal(10);
+    expect(voter2Before.level).to.equal(2);
+    expect(voter2Before.totalPoints).to.equal(10);
+
+    await escrow.connect(voter1).resolveDispute(1);
+
+    const technicianAfter = await reputation.getReputation(technician.address);
+    const voter2After = await reputation.getReputation(voter2.address);
+
+    expect(technicianAfter.level).to.equal(1);
+    expect(technicianAfter.totalPoints).to.equal(5);
+    expect(technicianAfter.negativeRatings).to.equal(1);
+
+    expect(voter2After.level).to.equal(1);
+    expect(voter2After.totalPoints).to.equal(5);
+    expect(voter2After.negativeRatings).to.equal(1);
+  });
 });
