@@ -137,4 +137,53 @@ describe("Regras de negocio principais", () => {
     await expect(escrow.connect(client).rateUser(1, 4))
       .to.be.revertedWith("Client already rated");
   });
+
+  it("deve reduzir a reputacao do cliente quando o tecnico avalia negativamente", async () => {
+    const { client, technician, token, reputation, escrow, badge } = await loadFixture(deployRepairSystem);
+
+    await token.connect(client).approve(await escrow.getAddress(), ethers.parseUnits("1500", 18));
+
+    for (let serviceIndex = 0; serviceIndex < 5; serviceIndex++) {
+      await escrow.connect(client).createOrder(`Servico cliente ${serviceIndex + 1}`);
+      await escrow.connect(technician).submitBudget(serviceIndex + 1, ORDER_AMOUNT);
+      await escrow.connect(client).acceptBudget(serviceIndex + 1);
+      await escrow.connect(technician).completeOrder(serviceIndex + 1);
+      await escrow.connect(client).confirmCompletion(serviceIndex + 1);
+      await escrow.connect(technician).rateUser(serviceIndex + 1, 5);
+    }
+
+    const beforePenalty = await reputation.getReputation(client.address);
+    expect(beforePenalty.level).to.equal(2);
+    expect(beforePenalty.totalPoints).to.equal(10);
+
+    await escrow.connect(client).createOrder("Servico com nota baixa");
+    await escrow.connect(technician).submitBudget(6, ORDER_AMOUNT);
+    await escrow.connect(client).acceptBudget(6);
+    await escrow.connect(technician).completeOrder(6);
+    await escrow.connect(client).confirmCompletion(6);
+    await escrow.connect(technician).rateUser(6, 1);
+
+    const afterPenalty = await reputation.getReputation(client.address);
+    expect(afterPenalty.negativeRatings).to.equal(1);
+    expect(afterPenalty.totalPoints).to.equal(7);
+    expect(afterPenalty.level).to.equal(1);
+    expect(await badge.levelOf(client.address)).to.equal(1);
+  });
+
+  it("deve impedir que o tecnico avalie o mesmo cliente duas vezes no mesmo servico", async () => {
+    const { client, technician, token, escrow } = await loadFixture(deployRepairSystem);
+
+    await token.connect(client).approve(await escrow.getAddress(), ethers.parseUnits("1000", 18));
+
+    await escrow.connect(client).createOrder("Servico repetido");
+    await escrow.connect(technician).submitBudget(1, ORDER_AMOUNT);
+    await escrow.connect(client).acceptBudget(1);
+    await escrow.connect(technician).completeOrder(1);
+    await escrow.connect(client).confirmCompletion(1);
+
+    await escrow.connect(technician).rateUser(1, 4);
+
+    await expect(escrow.connect(technician).rateUser(1, 2))
+      .to.be.revertedWith("Technician already rated");
+  });
 });
