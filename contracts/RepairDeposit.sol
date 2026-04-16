@@ -134,12 +134,13 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         (
             uint80 roundId,
             int256 price,
-            ,
+            uint256 startedAt,
             uint256 updatedAt,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
 
         require(price > 0, "Invalid price feed");
+        require(startedAt > 0, "Stale start");
         require(updatedAt > 0, "Stale price feed");
         require(answeredInRound >= roundId, "Stale round");
 

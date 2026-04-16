@@ -54,7 +54,7 @@ contract RepairBadge is ERC721, Ownable {
         tokenIdOf[user]   = newTokenId;
         levelOf[user]     = BRONZE;
 
-        _safeMint(user, newTokenId);
+        _mint(user, newTokenId);
 
         emit BadgeMinted(user, newTokenId, BRONZE);
     }
@@ -88,7 +88,7 @@ contract RepairBadge is ERC721, Ownable {
         tokenIdOf[user] = newTokenId;
         levelOf[user]   = newLevel;
 
-        _safeMint(user, newTokenId);
+        _mint(user, newTokenId);
 
         emit BadgeUpdated(user, oldTokenId, newTokenId, newLevel);
     }

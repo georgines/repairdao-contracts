@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // Interface to interact with RepairBadge contract
 interface IRepairBadge {
@@ -30,7 +31,7 @@ interface IRepairReputation {
 }
 
 // Contract that manages reputation and trust levels of technicians and clients
-contract RepairReputation is Ownable, IRepairReputation {
+contract RepairReputation is Ownable, ReentrancyGuard, IRepairReputation {
 
     // Contract addresses
     IRepairBadge   public immutable repairBadge;
@@ -107,7 +108,7 @@ contract RepairReputation is Ownable, IRepairReputation {
     }
 
     // Register a new user at level 1
-    function registerUser(address user) external onlyAuthorized {
+    function registerUser(address user) external onlyAuthorized nonReentrant {
         require(user != address(0), "Invalid address");
         require(reputations[user].level == 0, "User already registered");
 
@@ -131,7 +132,7 @@ contract RepairReputation is Ownable, IRepairReputation {
         address rated,
         uint8 rating,
         uint256 serviceId
-    ) external {
+    ) external nonReentrant {
         _rate(msg.sender, rated, rating, serviceId);
     }
 
@@ -141,7 +142,7 @@ contract RepairReputation is Ownable, IRepairReputation {
         address rated,
         uint8 rating,
         uint256 serviceId
-    ) external onlyAuthorized {
+    ) external onlyAuthorized nonReentrant {
         _rate(rater, rated, rating, serviceId);
     }
 
@@ -186,7 +187,7 @@ contract RepairReputation is Ownable, IRepairReputation {
     }
 
     // Penalize a user for fraud or losing a dispute
-    function penalize(address user) external onlyAuthorized {
+    function penalize(address user) external onlyAuthorized nonReentrant {
         require(reputations[user].level > 0, "User not registered");
 
         Reputation storage rep = reputations[user];
@@ -205,7 +206,7 @@ contract RepairReputation is Ownable, IRepairReputation {
     }
 
     // Reward a user for voting on the winning side
-    function reward(address user) external onlyAuthorized {
+    function reward(address user) external onlyAuthorized nonReentrant {
         require(reputations[user].level > 0, "User not registered");
 
         Reputation storage rep = reputations[user];
