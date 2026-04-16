@@ -15,6 +15,9 @@ describe("Fluxos de erro", () => {
       .to.be.revertedWith("Client must have active deposit");
 
     await escrow.connect(client).createOrder("Notebook sem orcamento");
+    const createdOrder = await escrow.getOrder(1);
+    expect(createdOrder.client).to.equal(client.address);
+    expect(createdOrder.description).to.equal("Notebook sem orcamento");
 
     await expect(escrow.connect(outsider).submitBudget(1, ORDER_AMOUNT))
       .to.be.revertedWith("Technician must have active deposit");

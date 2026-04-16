@@ -51,5 +51,8 @@ describe("Fluxo completo - sucesso", () => {
     expect(await deposit.isActive(technician.address)).to.be.false;
     expect(await badge.hasBadge(client.address)).to.be.false;
     expect(await badge.hasBadge(technician.address)).to.be.false;
+
+    await expect(escrow.connect(technician).createOrder("Sem deposito"))
+      .to.be.revertedWith("Client must have active deposit");
   });
 });

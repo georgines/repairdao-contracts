@@ -21,6 +21,8 @@ describe("Disputa - tecnico vence", () => {
 
     await escrow.connect(voter1).voteOnDispute(1, true);
     await escrow.connect(voter2).voteOnDispute(1, true);
+    await expect(escrow.connect(client).voteOnDispute(1, true))
+      .to.be.revertedWith("Involved parties cannot vote");
 
     const dispute = await escrow.getDispute(1);
     await time.increaseTo(dispute.deadline + 1n);

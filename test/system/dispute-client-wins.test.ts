@@ -25,6 +25,8 @@ describe("Disputa - cliente vence", () => {
     await expect(escrow.connect(technician).submitEvidence(1, "Laudo tecnico"))
       .to.emit(escrow, "EvidenceSubmitted")
       .withArgs(1, technician.address);
+    await expect(escrow.connect(client).submitEvidence(1, ""))
+      .to.be.revertedWith("Content cannot be empty");
 
     await escrow.connect(voter1).voteOnDispute(1, true);
     await escrow.connect(voter2).voteOnDispute(1, false);

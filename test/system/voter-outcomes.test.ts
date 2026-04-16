@@ -19,10 +19,14 @@ describe("Resultado dos votantes na disputa", () => {
       await escrow.connect(client).openDispute(1, "Problema nao resolvido");
       await escrow.connect(voter1).voteOnDispute(1, true);
       await escrow.connect(voter2).voteOnDispute(1, false);
+      await expect(escrow.connect(client).voteOnDispute(1, true))
+        .to.be.revertedWith("Involved parties cannot vote");
     } else {
       await escrow.connect(technician).openDispute(1, "Cliente nao confirmou entrega");
       await escrow.connect(voter1).voteOnDispute(1, true);
       await escrow.connect(voter2).voteOnDispute(1, false);
+      await expect(escrow.connect(technician).voteOnDispute(1, true))
+        .to.be.revertedWith("Involved parties cannot vote");
     }
 
     const dispute = await escrow.getDispute(1);
