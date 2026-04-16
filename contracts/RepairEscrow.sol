@@ -14,7 +14,6 @@ interface IRepairDepositEscrow {
 
 // Interface to interact with RepairReputation contract
 interface IRepairReputationEscrow {
-    function rate(address rated, uint8 rating, uint256 serviceId) external;
     function rateFrom(address rater, address rated, uint8 rating, uint256 serviceId) external;
     function penalize(address user) external;
     function reward(address user) external;
@@ -26,7 +25,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable repairToken;
-    IRepairDepositEscrow public immutable repairDeposit;
+    IRepairDepositEscrow    public immutable repairDeposit;
     IRepairReputationEscrow public immutable repairReputation;
 
     // Voting period for disputes (1 day)
@@ -47,22 +46,22 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
 
     // Service order data structure
     struct ServiceOrder {
-        uint256 id;
-        address client;
-        address technician;
-        uint256 amount;
-        string description;
+        uint256      id;
+        address      client;
+        address      technician;
+        uint256      amount;
+        string       description;
         ServiceState state;
-        uint256 createdAt;
-        uint256 completedAt;
-        bool clientRated;
-        bool technicianRated;
+        uint256      createdAt;
+        uint256      completedAt;
+        bool         clientRated;
+        bool         technicianRated;
     }
 
     // Evidence data structure
     struct Evidence {
         address submittedBy;
-        string content;
+        string  content;
         uint256 timestamp;
     }
 
@@ -74,8 +73,8 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         uint256 votesForOpener;
         uint256 votesForOpposing;
         uint256 deadline;
-        bool resolved;
-        string reason;
+        bool    resolved;
+        string  reason;
     }
 
     // Total number of orders
@@ -119,6 +118,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
     event DisputeResolved(uint256 indexed id, address winner, uint256 votesForOpener, uint256 votesForOpposing);
     event PaymentReleased(uint256 indexed id, address indexed recipient, uint256 amount);
     event SlashPercentUpdated(uint256 newPercent);
+    event VotingPeriodUpdated(uint256 newPeriod);
 
     // Constructor
     constructor(
@@ -126,8 +126,8 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         address _deposit,
         address _reputation
     ) Ownable(msg.sender) {
-        repairToken = IERC20(_token);
-        repairDeposit = IRepairDepositEscrow(_deposit);
+        repairToken      = IERC20(_token);
+        repairDeposit    = IRepairDepositEscrow(_deposit);
         repairReputation = IRepairReputationEscrow(_reputation);
     }
 
@@ -139,15 +139,15 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         totalOrders++;
 
         orders[totalOrders] = ServiceOrder({
-            id: totalOrders,
-            client: msg.sender,
-            technician: address(0),
-            amount: 0,
-            description: description,
-            state: ServiceState.Open,
-            createdAt: block.timestamp,
-            completedAt: 0,
-            clientRated: false,
+            id:              totalOrders,
+            client:          msg.sender,
+            technician:      address(0),
+            amount:          0,
+            description:     description,
+            state:           ServiceState.Open,
+            createdAt:       block.timestamp,
+            completedAt:     0,
+            clientRated:     false,
             technicianRated: false
         });
 
@@ -165,8 +165,8 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         require(amount > 0, "Amount must be greater than zero");
 
         order.technician = msg.sender;
-        order.amount = amount;
-        order.state = ServiceState.Budgeted;
+        order.amount     = amount;
+        order.state      = ServiceState.Budgeted;
 
         ordersByTechnician[msg.sender].push(orderId);
 
@@ -179,10 +179,11 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         require(order.client == msg.sender, "Not the client");
         require(order.state == ServiceState.Budgeted, "No budget submitted");
 
+        // Update state before external call
+        order.state = ServiceState.InProgress;
+
         // Lock payment in escrow
         repairToken.safeTransferFrom(msg.sender, address(this), order.amount);
-
-        order.state = ServiceState.InProgress;
 
         emit BudgetAccepted(orderId, msg.sender, order.amount);
     }
@@ -204,13 +205,17 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         require(order.client == msg.sender, "Not the client");
         require(order.state == ServiceState.Completed, "Order is not completed");
 
+        // Update state before external call
         order.completedAt = block.timestamp;
 
         // Release payment to technician
-        repairToken.safeTransfer(order.technician, order.amount);
+        address technician = order.technician;
+        uint256 amount     = order.amount;
+
+        repairToken.safeTransfer(technician, amount);
 
         emit CompletionConfirmed(orderId, msg.sender);
-        emit PaymentReleased(orderId, order.technician, order.amount);
+        emit PaymentReleased(orderId, technician, amount);
     }
 
     // Client rates technician or technician rates client
@@ -259,14 +264,14 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         order.state = ServiceState.Disputed;
 
         disputes[orderId] = Dispute({
-            orderId: orderId,
-            openedBy: msg.sender,
-            opposingParty: opposingParty,
-            votesForOpener: 0,
+            orderId:          orderId,
+            openedBy:         msg.sender,
+            opposingParty:    opposingParty,
+            votesForOpener:   0,
             votesForOpposing: 0,
-            deadline: block.timestamp + votingPeriod,
-            resolved: false,
-            reason: reason
+            deadline:         block.timestamp + votingPeriod,
+            resolved:         false,
+            reason:           reason
         });
 
         emit DisputeOpened(orderId, msg.sender, opposingParty, reason);
@@ -285,8 +290,8 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
 
         evidences[orderId].push(Evidence({
             submittedBy: msg.sender,
-            content: content,
-            timestamp: block.timestamp
+            content:     content,
+            timestamp:   block.timestamp
         }));
 
         emit EvidenceSubmitted(orderId, msg.sender);
@@ -294,8 +299,8 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
 
     // Token holders vote on the dispute
     function voteOnDispute(uint256 orderId, bool supportOpener) external nonReentrant {
-        ServiceOrder storage order = orders[orderId];
-        Dispute storage dispute = disputes[orderId];
+        ServiceOrder storage order   = orders[orderId];
+        Dispute      storage dispute = disputes[orderId];
 
         require(order.state == ServiceState.Disputed, "No active dispute");
         require(block.timestamp < dispute.deadline, "Voting period ended");
@@ -308,12 +313,12 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         uint256 votingPower = repairToken.balanceOf(msg.sender);
         require(votingPower > 0, "No tokens to vote");
 
-        hasVoted[orderId][msg.sender] = true;
-        voteSide[orderId][msg.sender] = supportOpener;
+        hasVoted[orderId][msg.sender]  = true;
+        voteSide[orderId][msg.sender]  = supportOpener;
         voters[orderId].push(msg.sender);
 
         if (supportOpener) {
-            dispute.votesForOpener += votingPower;
+            dispute.votesForOpener   += votingPower;
         } else {
             dispute.votesForOpposing += votingPower;
         }
@@ -322,22 +327,23 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
     }
 
     // Anyone resolves the dispute after voting period ends
+    // NOTE: calls-loop is a known MVP limitation — voter list is expected to be small
     function resolveDispute(uint256 orderId) external nonReentrant {
-        ServiceOrder storage order = orders[orderId];
-        Dispute storage dispute = disputes[orderId];
+        ServiceOrder storage order   = orders[orderId];
+        Dispute      storage dispute = disputes[orderId];
 
         require(order.state == ServiceState.Disputed, "No active dispute");
         require(block.timestamp >= dispute.deadline, "Voting period not ended");
         require(!dispute.resolved, "Already resolved");
 
-        dispute.resolved = true;
-        order.state = ServiceState.Resolved;
+        dispute.resolved  = true;
+        order.state       = ServiceState.Resolved;
         order.completedAt = block.timestamp;
 
         // Tie goes to opener
-        bool openerWins = dispute.votesForOpener >= dispute.votesForOpposing;
-        address winner = openerWins ? dispute.openedBy : dispute.opposingParty;
-        address loser = openerWins ? dispute.opposingParty : dispute.openedBy;
+        bool    openerWins = dispute.votesForOpener >= dispute.votesForOpposing;
+        address winner     = openerWins ? dispute.openedBy    : dispute.opposingParty;
+        address loser      = openerWins ? dispute.opposingParty : dispute.openedBy;
 
         // Release payment to winner
         repairToken.safeTransfer(winner, order.amount);
@@ -347,10 +353,12 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
         repairReputation.penalize(loser);
 
         // Reward and penalize voters
-        for (uint256 i = 0; i < voters[orderId].length; i++) {
-            address voter = voters[orderId][i];
-            bool votedForOpener = voteSide[orderId][voter];
-            bool voterWon = (votedForOpener == openerWins);
+        address[] storage disputeVoters = voters[orderId];
+        uint256 len = disputeVoters.length;
+        for (uint256 i = 0; i < len; i++) {
+            address voter        = disputeVoters[i];
+            bool    votedOpener  = voteSide[orderId][voter];
+            bool    voterWon     = (votedOpener == openerWins);
 
             if (voterWon) {
                 repairReputation.reward(voter);
@@ -392,6 +400,7 @@ contract RepairEscrow is Ownable, ReentrancyGuard {
     // Owner updates voting period
     function setVotingPeriod(uint256 period) external onlyOwner {
         votingPeriod = period;
+        emit VotingPeriodUpdated(period);
     }
 
     // Owner updates slash percent

@@ -16,8 +16,8 @@ contract RepairBadge is ERC721, Ownable {
     uint8 public constant ELITE    = 5;
 
     mapping(address => uint256) public tokenIdOf;
-    mapping(address => uint8) public levelOf;
-    mapping(address => bool) public hasBadge;
+    mapping(address => uint8)   public levelOf;
+    mapping(address => bool)    public hasBadge;
 
     // Authorized contracts that can call badge functions
     mapping(address => bool) public authorizedContracts;
@@ -50,9 +50,9 @@ contract RepairBadge is ERC721, Ownable {
         _tokenIdCounter++;
         uint256 newTokenId = _tokenIdCounter;
 
-        hasBadge[user] = true;
-        tokenIdOf[user] = newTokenId;
-        levelOf[user] = BRONZE;
+        hasBadge[user]    = true;
+        tokenIdOf[user]   = newTokenId;
+        levelOf[user]     = BRONZE;
 
         _safeMint(user, newTokenId);
 
@@ -65,9 +65,9 @@ contract RepairBadge is ERC721, Ownable {
 
         uint256 tokenId = tokenIdOf[user];
 
-        hasBadge[user] = false;
+        hasBadge[user]  = false;
         tokenIdOf[user] = 0;
-        levelOf[user] = 0;
+        levelOf[user]   = 0;
 
         _burn(tokenId);
 
@@ -86,7 +86,7 @@ contract RepairBadge is ERC721, Ownable {
         uint256 newTokenId = _tokenIdCounter;
 
         tokenIdOf[user] = newTokenId;
-        levelOf[user] = newLevel;
+        levelOf[user]   = newLevel;
 
         _safeMint(user, newTokenId);
 

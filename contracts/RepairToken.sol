@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // Native token of the RepairDAO platform
 contract RepairToken is ERC20, Ownable {
 
+    // Fix: too-many-digits — named constant avoids literal with many digits
+    uint256 private constant INITIAL_SUPPLY = 1_000_000;
+
     // How many tokens per 1 ETH
     uint256 public tokensPerEth = 1000;
 
@@ -14,11 +17,11 @@ contract RepairToken is ERC20, Ownable {
     event TokensPurchased(address indexed buyer, uint256 ethAmount, uint256 tokenAmount);
     event TokensBurned(address indexed burner, uint256 amount);
     event RateUpdated(uint256 newRate);
-    event EthWithdrawn(address indexed owner, uint256 amount);
+    // Fix: reentrancy-events — receiver instead of owner() after external call
+    event EthWithdrawn(address indexed receiver, uint256 amount);
 
-    // Constructor: creates 1 million tokens for the owner
     constructor() ERC20("RepairToken", "RPT") Ownable(msg.sender) {
-        _mint(msg.sender, 1000000 * 10 ** decimals());
+        _mint(msg.sender, INITIAL_SUPPLY * 10 ** decimals());
     }
 
     // User sends ETH and receives RPT tokens
@@ -50,11 +53,14 @@ contract RepairToken is ERC20, Ownable {
         emit RateUpdated(newRate);
     }
 
-    // Owner withdraws accumulated ETH
+    // Fix: reentrancy-unlimited-gas — use call instead of transfer
+    // Fix: reentrancy-events — emit before external call
     function withdraw() external onlyOwner {
-        uint256 balance = address(this).balance;
+        uint256 balance  = address(this).balance;
         require(balance > 0, "No ETH to withdraw");
-        payable(owner()).transfer(balance);
-        emit EthWithdrawn(owner(), balance);
+        address receiver = owner();
+        emit EthWithdrawn(receiver, balance);
+        (bool success, ) = payable(receiver).call{value: balance}("");
+        require(success, "ETH transfer failed");
     }
 }

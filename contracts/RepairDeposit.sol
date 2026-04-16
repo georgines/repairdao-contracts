@@ -96,10 +96,10 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         address _reputation,
         address _priceFeed
     ) Ownable(msg.sender) {
-        repairToken = IERC20(_token);
-        repairBadge = IRepairBadgeDeposit(_badge);
+        repairToken    = IERC20(_token);
+        repairBadge    = IRepairBadgeDeposit(_badge);
         repairReputation = IRepairReputationDeposit(_reputation);
-        priceFeed = AggregatorV3Interface(_priceFeed);
+        priceFeed      = AggregatorV3Interface(_priceFeed);
 
         // Set default rates per level
         ratePerLevel[1] = 1100; // 11%
@@ -114,6 +114,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         authorizedContracts[contractAddress] = true;
     }
 
+    // Owner can update the reputation contract address
     function setRepairReputation(address reputationAddress) external onlyOwner {
         require(reputationAddress != address(0), "Invalid reputation");
         repairReputation = IRepairReputationDeposit(reputationAddress);
@@ -130,7 +131,18 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
 
     // Returns current ETH/USD price from Chainlink
     function getEthUsdPrice() public view returns (int256) {
-        (, int256 price,,,) = priceFeed.latestRoundData();
+        (
+            uint80 roundId,
+            int256 price,
+            ,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+
+        require(price > 0, "Invalid price feed");
+        require(updatedAt > 0, "Stale price feed");
+        require(answeredInRound >= roundId, "Stale round");
+
         return price;
     }
 
@@ -169,16 +181,10 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
             ? data.customRate
             : ratePerLevel[level];
 
-        // Adjust reward based on ETH/USD price
-        int256 ethPrice = getEthUsdPrice();
-        uint256 baseReward = data.amount * annualRate * timeElapsed;
-
         // Multiply before dividing to preserve precision
-        if (ethPrice > 0) {
-            baseReward = (baseReward * 2000 * 10 ** 8) / (365 days * 10000 * uint256(ethPrice));
-        } else {
-            baseReward = baseReward / (365 days * 10000);
-        }
+        int256 ethPrice = getEthUsdPrice();
+        uint256 baseReward = (data.amount * annualRate * timeElapsed * 2000 * 10 ** 8)
+                           / (365 days * 10000 * uint256(ethPrice));
 
         return baseReward;
     }
@@ -188,7 +194,8 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         require(deposits[msg.sender].active, "No active deposit");
 
         uint256 rewards = getRewards(msg.sender);
-        uint256 principal = deposits[msg.sender].amount;
+
+        uint256 principal        = deposits[msg.sender].amount;
         uint256 availableBalance = repairToken.balanceOf(address(this));
         uint256 availableRewards = availableBalance > principal
             ? availableBalance - principal
@@ -213,8 +220,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
 
         uint256 amount = deposits[msg.sender].amount;
 
-        // Claim pending rewards first
-        uint256 rewards = getRewards(msg.sender);
+        uint256 rewards          = getRewards(msg.sender);
         uint256 availableBalance = repairToken.balanceOf(address(this));
         uint256 availableRewards = availableBalance > amount
             ? availableBalance - amount
@@ -224,7 +230,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
             rewards = availableRewards;
         }
 
-        // Deactivate account
+        // Deactivate account before external calls
         deposits[msg.sender].active = false;
         deposits[msg.sender].amount = 0;
 
@@ -247,7 +253,6 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         uint256 slashAmount = (deposits[user].amount * percent) / 100;
         deposits[user].amount -= slashAmount;
 
-        // Transfer slashed tokens to contract owner (platform)
         repairToken.safeTransfer(owner(), slashAmount);
 
         emit UserSlashed(user, slashAmount);

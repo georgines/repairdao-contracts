@@ -33,7 +33,7 @@ interface IRepairReputation {
 contract RepairReputation is Ownable, IRepairReputation {
 
     // Contract addresses
-    IRepairBadge public immutable repairBadge;
+    IRepairBadge   public immutable repairBadge;
     IRepairDeposit public immutable repairDeposit;
 
     // Authorized contracts that can call reputation functions
@@ -64,7 +64,7 @@ contract RepairReputation is Ownable, IRepairReputation {
 
     // User reputation data
     struct Reputation {
-        uint8 level;
+        uint8   level;
         uint256 totalPoints;
         uint256 positiveRatings;
         uint256 negativeRatings;
@@ -89,7 +89,7 @@ contract RepairReputation is Ownable, IRepairReputation {
 
     // Constructor
     constructor(address _badge, address _deposit) Ownable(msg.sender) {
-        repairBadge = IRepairBadge(_badge);
+        repairBadge   = IRepairBadge(_badge);
         repairDeposit = IRepairDeposit(_deposit);
     }
 
@@ -112,12 +112,12 @@ contract RepairReputation is Ownable, IRepairReputation {
         require(reputations[user].level == 0, "User already registered");
 
         reputations[user] = Reputation({
-            level: LEVEL_1,
-            totalPoints: 0,
+            level:           LEVEL_1,
+            totalPoints:     0,
             positiveRatings: 0,
             negativeRatings: 0,
-            totalRatings: 0,
-            ratingSum: 0
+            totalRatings:    0,
+            ratingSum:       0
         });
 
         // Mint badge at level 1
@@ -135,6 +135,7 @@ contract RepairReputation is Ownable, IRepairReputation {
         _rate(msg.sender, rated, rating, serviceId);
     }
 
+    // Authorized contract rates on behalf of a user
     function rateFrom(
         address rater,
         address rated,
@@ -144,6 +145,7 @@ contract RepairReputation is Ownable, IRepairReputation {
         _rate(rater, rated, rating, serviceId);
     }
 
+    // Internal rating logic
     function _rate(
         address rater,
         address rated,
@@ -244,7 +246,7 @@ contract RepairReputation is Ownable, IRepairReputation {
         if (points >= POINTS_PER_LEVEL * 4) return LEVEL_5;
         if (points >= POINTS_PER_LEVEL * 3) return LEVEL_4;
         if (points >= POINTS_PER_LEVEL * 2) return LEVEL_3;
-        if (points >= POINTS_PER_LEVEL * 1) return LEVEL_2;
+        if (points >= POINTS_PER_LEVEL)     return LEVEL_2;
         return LEVEL_1;
     }
 

@@ -28,12 +28,12 @@ contract RepairGovernance is Ownable {
     struct Proposal {
         uint256 id;
         address proposer;
-        string description;
+        string  description;
         uint256 votesFor;
         uint256 votesAgainst;
         uint256 deadline;
-        bool executed;
-        bool approved;
+        bool    executed;
+        bool    approved;
     }
 
     // Proposals by ID
@@ -50,7 +50,7 @@ contract RepairGovernance is Ownable {
 
     // Constructor
     constructor(address _token, address _deposit) Ownable(msg.sender) {
-        repairToken = IERC20(_token);
+        repairToken   = IERC20(_token);
         repairDeposit = IRepairDepositGov(_deposit);
     }
 
@@ -65,18 +65,20 @@ contract RepairGovernance is Ownable {
 
         totalProposals++;
 
+        uint256 deadline = block.timestamp + (durationDays * 1 days);
+
         proposals[totalProposals] = Proposal({
-            id: totalProposals,
-            proposer: msg.sender,
-            description: description,
-            votesFor: 0,
+            id:           totalProposals,
+            proposer:     msg.sender,
+            description:  description,
+            votesFor:     0,
             votesAgainst: 0,
-            deadline: block.timestamp + (durationDays * 1 days),
-            executed: false,
-            approved: false
+            deadline:     deadline,
+            executed:     false,
+            approved:     false
         });
 
-        emit ProposalCreated(totalProposals, msg.sender, description, proposals[totalProposals].deadline);
+        emit ProposalCreated(totalProposals, msg.sender, description, deadline);
     }
 
     // Token holder votes on a proposal
@@ -92,7 +94,7 @@ contract RepairGovernance is Ownable {
         hasVoted[proposalId][msg.sender] = true;
 
         if (support) {
-            proposal.votesFor += votingPower;
+            proposal.votesFor     += votingPower;
         } else {
             proposal.votesAgainst += votingPower;
         }
