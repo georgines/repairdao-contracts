@@ -87,6 +87,7 @@ contract RepairReputation is Ownable, ReentrancyGuard, IRepairReputation {
     event LevelDown(address indexed user, uint8 oldLevel, uint8 newLevel);
     event UserPenalized(address indexed user, uint256 points);
     event UserRewarded(address indexed user, uint256 points);
+    event UserUnregistered(address indexed user);
 
     // Constructor
     constructor(address _badge, address _deposit) Ownable(msg.sender) {
@@ -216,6 +217,13 @@ contract RepairReputation is Ownable, ReentrancyGuard, IRepairReputation {
         _updateLevel(user);
 
         emit UserRewarded(user, REWARD_POINTS);
+    }
+
+    // Unregister a user and reset their reputation data
+    function unregisterUser(address user) external onlyAuthorized nonReentrant {
+        require(reputations[user].level > 0, "User not registered");
+        delete reputations[user];
+        emit UserUnregistered(user);
     }
 
     // Internal function to update level based on points

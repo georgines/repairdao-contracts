@@ -16,6 +16,7 @@ interface IRepairBadgeDeposit {
 interface IRepairReputationDeposit {
     function registerUser(address user) external;
     function getLevel(address user) external view returns (uint8);
+    function unregisterUser(address user) external;
 }
 
 // Interface for the deposit contract itself
@@ -239,6 +240,9 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         if (repairBadge.hasBadge(msg.sender)) {
             repairBadge.burnBadge(msg.sender);
         }
+
+        // Unregister user from reputation (reset their reputation record)
+        repairReputation.unregisterUser(msg.sender);
 
         // Transfer deposit + rewards
         repairToken.safeTransfer(msg.sender, amount + rewards);
