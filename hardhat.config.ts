@@ -13,9 +13,7 @@ const config: HardhatUserConfig = {
   },
   defaultNetwork: process.env.REPAIRDAO_DEFAULT_NETWORK || "hardhat",
   networks: {
-    hardhat: {
-      chainId: 1337
-    },
+    hardhat: {},
     localhost: {
       url: process.env.HARDHAT_RPC_URL || "http://127.0.0.1:8545",
       accounts: process.env.HARDHAT_PRIVATE_KEY ? [process.env.HARDHAT_PRIVATE_KEY] : []

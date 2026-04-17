@@ -74,7 +74,7 @@ async function main() {
     }
   };
 
-  const deploymentsDir = path.join(__dirname, "..", "deployments");
+  const deploymentsDir = path.join(__dirname, "../../", "repairdao/src/contracts/deploy");
   if (!fs.existsSync(deploymentsDir)) fs.mkdirSync(deploymentsDir, { recursive: true });
 
   const fileName = network.name === "sepolia" ? "sepolia.json" : "local.json";
