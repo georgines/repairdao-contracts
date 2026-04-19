@@ -67,4 +67,24 @@ describe("RepairDeposit coverage extras", () => {
     await expect(deposit.connect(user).withdrawRewards())
       .to.be.revertedWith("No rewards to claim");
   });
+
+  it("getRewards should return zero for inactive accounts", async () => {
+    expect(await deposit.getRewards(owner.address)).to.equal(0);
+  });
+
+  it("getRewards should use a custom rate when one is set", async () => {
+    await deposit.connect(user).deposit(MIN_DEPOSIT, false);
+    await deposit.connect(owner).updateRate(user.address, 1500);
+
+    const rewards = await deposit.getRewards(user.address);
+    expect(rewards).to.be.gt(0);
+  });
+
+  it("withdrawDeposit should still work after the badge is burned externally", async () => {
+    await deposit.connect(user).deposit(MIN_DEPOSIT, false);
+    await badge.connect(owner).burnBadge(user.address);
+
+    await expect(deposit.connect(user).withdrawDeposit())
+      .to.emit(deposit, "DepositWithdrawn");
+  });
 });

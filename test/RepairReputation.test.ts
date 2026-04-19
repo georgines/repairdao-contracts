@@ -85,6 +85,34 @@ describe("RepairReputation", () => {
     });
   });
 
+  async function fundAndRegisterBothUsers() {
+    await token.mint(user.address, ethers.parseUnits("1000", 18));
+    await token.mint(user2.address, ethers.parseUnits("1000", 18));
+    await token.connect(user).approve(await deposit.getAddress(), ethers.parseUnits("1000", 18));
+    await token.connect(user2).approve(await deposit.getAddress(), ethers.parseUnits("1000", 18));
+    await deposit.connect(user).deposit(ethers.parseUnits("100", 18), false);
+    await deposit.connect(user2).deposit(ethers.parseUnits("100", 18), true);
+  }
+
+  describe("rate", () => {
+    it("deve permitir avaliar diretamente via rate", async () => {
+      await fundAndRegisterBothUsers();
+
+      await expect(reputation.connect(user).rate(user2.address, 5, 1))
+        .to.emit(reputation, "RatingSubmitted")
+        .withArgs(user.address, user2.address, 5, 1);
+    });
+
+    it("deve aplicar penalizacao com pontos baixos", async () => {
+      await fundAndRegisterBothUsers();
+
+      await reputation.connect(user).rate(user2.address, 1, 2);
+      const rep = await reputation.getReputation(user2.address);
+      expect(rep.totalPoints).to.equal(0);
+      expect(rep.negativeRatings).to.equal(1);
+    });
+  });
+
   describe("penalize", () => {
     beforeEach(async () => {
       await reputation.connect(authorized).registerUser(user.address);
@@ -132,6 +160,15 @@ describe("RepairReputation", () => {
       await reputation.connect(authorized).registerUser(user.address);
       expect(await reputation.getAverageRating(user.address)).to.equal(0);
     });
+
+    it("deve retornar media para usuario com avaliacoes", async () => {
+      await fundAndRegisterBothUsers();
+
+      await reputation.connect(user).rate(user2.address, 5, 1);
+      await reputation.connect(user).rate(user2.address, 3, 2);
+
+      expect(await reputation.getAverageRating(user2.address)).to.equal(4);
+    });
   });
 
   describe("getReputation", () => {
@@ -141,6 +178,13 @@ describe("RepairReputation", () => {
       expect(rep.level).to.equal(1);
       expect(rep.totalPoints).to.equal(0);
       expect(rep.totalRatings).to.equal(0);
+    });
+  });
+
+  describe("getUserRate", () => {
+    it("deve retornar a taxa do nivel atual do usuario", async () => {
+      await reputation.connect(authorized).registerUser(user.address);
+      expect(await reputation.getUserRate(user.address)).to.equal(1100);
     });
   });
 

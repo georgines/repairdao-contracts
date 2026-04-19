@@ -14,6 +14,7 @@ describe("RepairEscrow", () => {
   let client: HardhatEthersSigner;
   let technician: HardhatEthersSigner;
   let voter: HardhatEthersSigner;
+  let outsider: HardhatEthersSigner;
 
   const MIN_DEPOSIT = ethers.parseUnits("100", 18);
   const ORDER_AMOUNT = ethers.parseUnits("50", 18);
@@ -31,8 +32,13 @@ describe("RepairEscrow", () => {
     await escrow.connect(client).acceptBudget(1);
   }
 
+  async function movePastVotingPeriod() {
+    await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60 + 1]);
+    await ethers.provider.send("evm_mine", []);
+  }
+
   beforeEach(async () => {
-    [owner, client, technician, voter] = await ethers.getSigners();
+    [owner, client, technician, voter, outsider] = await ethers.getSigners();
 
     token = await (await ethers.getContractFactory("RepairToken")).deploy();
     await token.waitForDeployment();
@@ -78,7 +84,7 @@ describe("RepairEscrow", () => {
     await setupUser(technician, true);
 
     // Setup voter
-    await token.mint(voter.address, ethers.parseUnits("500", 18));
+    await setupUser(voter, false);
   });
 
   describe("createOrder", () => {
@@ -95,7 +101,7 @@ describe("RepairEscrow", () => {
     });
 
     it("deve falhar sem deposito ativo", async () => {
-      await expect(escrow.connect(voter).createOrder("Notebook nao liga"))
+      await expect(escrow.connect(outsider).createOrder("Notebook nao liga"))
         .to.be.revertedWith("Client must have active deposit");
     });
 
@@ -124,7 +130,7 @@ describe("RepairEscrow", () => {
     });
 
     it("deve falhar sem deposito ativo", async () => {
-      await expect(escrow.connect(voter).submitBudget(1, ORDER_AMOUNT))
+      await expect(escrow.connect(outsider).submitBudget(1, ORDER_AMOUNT))
         .to.be.revertedWith("Technician must have active deposit");
     });
 
@@ -241,6 +247,11 @@ describe("RepairEscrow", () => {
       await expect(escrow.connect(client).rateUser(1, 5))
         .to.be.revertedWith("Client already rated");
     });
+
+    it("deve falhar para terceiros nao envolvidos", async () => {
+      await expect(escrow.connect(voter).rateUser(1, 5))
+        .to.be.revertedWith("Not authorized to rate");
+    });
   });
 
   describe("openDispute", () => {
@@ -290,6 +301,13 @@ describe("RepairEscrow", () => {
       await expect(escrow.connect(client).submitEvidence(1, ""))
         .to.be.revertedWith("Content cannot be empty");
     });
+
+    it("deve retornar as evidencias registradas", async () => {
+      await escrow.connect(client).submitEvidence(1, "Foto do problema");
+      const evidences = await escrow.getEvidences(1);
+      expect(evidences.length).to.equal(1);
+      expect(evidences[0].content).to.equal("Foto do problema");
+    });
   });
 
   describe("voteOnDispute", () => {
@@ -323,6 +341,21 @@ describe("RepairEscrow", () => {
     });
   });
 
+  describe("resolveDispute - opener loses", () => {
+    it("deve resolver com o opposing party vencendo quando o opener perde", async () => {
+      await createAndAcceptOrder();
+      await escrow.connect(client).openDispute(1, "Servico mal feito");
+      await escrow.connect(voter).voteOnDispute(1, false);
+      await movePastVotingPeriod();
+
+      await expect(escrow.resolveDispute(1))
+        .to.emit(escrow, "DisputeResolved");
+
+      const order = await escrow.getOrder(1);
+      expect(order.state).to.equal(5); // Resolved
+    });
+  });
+
   describe("getClientOrders e getTechnicianOrders", () => {
     it("deve retornar ordens do cliente", async () => {
       await escrow.connect(client).createOrder("Ordem 1");
@@ -336,6 +369,25 @@ describe("RepairEscrow", () => {
       await escrow.connect(technician).submitBudget(1, ORDER_AMOUNT);
       const orders = await escrow.getTechnicianOrders(technician.address);
       expect(orders.length).to.equal(1);
+    });
+  });
+
+  describe("setVotingPeriod e setSlashPercent", () => {
+    it("owner deve conseguir atualizar periodo e slash percent valido", async () => {
+      await expect(escrow.connect(owner).setVotingPeriod(3 * 24 * 60 * 60))
+        .to.emit(escrow, "VotingPeriodUpdated")
+        .withArgs(3 * 24 * 60 * 60);
+
+      await expect(escrow.connect(owner).setSlashPercent(25))
+        .to.emit(escrow, "SlashPercentUpdated")
+        .withArgs(25);
+    });
+
+    it("deve falhar para slash percent invalido", async () => {
+      await expect(escrow.connect(owner).setSlashPercent(0))
+        .to.be.revertedWith("Invalid percent");
+      await expect(escrow.connect(owner).setSlashPercent(51))
+        .to.be.revertedWith("Invalid percent");
     });
   });
 });

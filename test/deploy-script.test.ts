@@ -2,13 +2,15 @@ import { expect } from "chai";
 import { execFileSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+import hre from "hardhat";
 
 describe("deploy script", function () {
   this.timeout(180000);
 
   const deployFilePath = path.resolve(__dirname, "..", "..", "repairdao", "src", "contracts", "deploy", "local.json");
+  const testFn = (hre as any).__SOLIDITY_COVERAGE_RUNNING ? it.skip : it;
 
-  it("shows start and completion logs and writes deployment addresses", function () {
+  testFn("shows start and completion logs and writes deployment addresses", function () {
     const hadExistingFile = fs.existsSync(deployFilePath);
     const originalContent = hadExistingFile ? fs.readFileSync(deployFilePath, "utf8") : null;
 
@@ -16,7 +18,7 @@ describe("deploy script", function () {
       const hardhatCli = require.resolve("hardhat/internal/cli/cli");
       const output = execFileSync(
         process.execPath,
-        [hardhatCli, "run", "scripts/deploy.ts", "--network", "hardhat"],
+        [hardhatCli, "run", "--no-compile", "scripts/deploy.ts", "--network", "hardhat"],
         {
           cwd: path.resolve(__dirname, ".."),
           env: {

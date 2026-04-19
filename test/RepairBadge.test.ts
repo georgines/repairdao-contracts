@@ -39,6 +39,18 @@ describe("RepairBadge", () => {
     });
   });
 
+  describe("owner path", () => {
+    it("owner deve poder chamar os caminhos autorizados diretamente", async () => {
+      await badge.connect(owner).mintBadge(user.address);
+      await expect(badge.connect(owner).burnBadge(user.address))
+        .to.emit(badge, "BadgeBurned");
+
+      await badge.connect(owner).mintBadge(user.address);
+      await expect(badge.connect(owner).updateBadge(user.address, 2))
+        .to.emit(badge, "BadgeUpdated");
+    });
+  });
+
   describe("mintBadge", () => {
     it("autorizado deve conseguir mintar badge", async () => {
       await badge.connect(authorized).mintBadge(user.address);
