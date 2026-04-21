@@ -63,6 +63,11 @@ async function main() {
     await repairDeposit.getAddress()
   );
 
+  console.log("[deploy] RepairToken: configuring governance");
+  await repairToken.setGovernance(await repairGovernance.getAddress());
+  console.log("[deploy] RepairDeposit: configuring governance");
+  await repairDeposit.setGovernance(await repairGovernance.getAddress());
+
   console.log("[deploy] RepairBadge: authorizing RepairReputation");
   await repairBadge.authorizeContract(await repairReputation.getAddress());
   console.log("[deploy] RepairBadge: authorizing RepairDeposit");

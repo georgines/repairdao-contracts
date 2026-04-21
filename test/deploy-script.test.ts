@@ -33,6 +33,8 @@ describe("deploy script", function () {
       expect(output).to.include("[deploy] RepairToken: deploy started");
       expect(output).to.match(/\[deploy\] RepairToken: deployed at 0x[a-fA-F0-9]{40}/);
       expect(output).to.match(/\[deploy\] RepairGovernance: deployed at 0x[a-fA-F0-9]{40}/);
+      expect(output).to.include("[deploy] RepairToken: configuring governance");
+      expect(output).to.include("[deploy] RepairDeposit: configuring governance");
       expect(output).to.include("[deploy] completed: local.json");
 
       expect(fs.existsSync(deployFilePath)).to.equal(true);

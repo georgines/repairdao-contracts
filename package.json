@@ -38,7 +38,7 @@
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia", 
     "audit:mythril-docker": "node scripts/audit-mythril-docker.js",
     "audit:slither": "hardhat compile && slither .",
-    "node": "hardhat node",
+    "node": "hardhat node --hostname 0.0.0.0",
     "test": "hardhat test"
   }
 }
