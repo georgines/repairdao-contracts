@@ -4,9 +4,14 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+interface IRepairTokenGov {
+    function setTokensPerEth(uint256 newRate) external;
+}
+
 // Interface to interact with RepairDeposit contract
 interface IRepairDepositGov {
     function isActive(address user) external view returns (bool);
+    function setMinDeposit(uint256 newMin) external;
 }
 
 // Simplified DAO governance contract for the RepairDAO platform
@@ -24,6 +29,15 @@ contract RepairGovernance is Ownable {
     // Minimum tokens required for quorum
     uint256 public quorum = 1000 * 10 ** 18;
 
+    // Fixed voting duration for all proposals
+    uint256 public constant PROPOSAL_DURATION = 5 minutes;
+
+    // Proposal action supported by governance execution
+    enum ProposalAction {
+        SetTokensPerEth,
+        SetMinDeposit
+    }
+
     // Proposal data structure
     struct Proposal {
         uint256 id;
@@ -34,6 +48,8 @@ contract RepairGovernance is Ownable {
         uint256 deadline;
         bool    executed;
         bool    approved;
+        ProposalAction action;
+        uint256 actionValue;
     }
 
     // Proposals by ID
@@ -47,6 +63,7 @@ contract RepairGovernance is Ownable {
     event VoteCast(uint256 indexed id, address indexed voter, bool support, uint256 votingPower);
     event ProposalExecuted(uint256 indexed id, bool approved);
     event QuorumUpdated(uint256 newQuorum);
+    event ProposalActionConfigured(uint256 indexed id, ProposalAction action, uint256 actionValue);
 
     // Constructor
     constructor(address _token, address _deposit) Ownable(msg.sender) {
@@ -54,18 +71,21 @@ contract RepairGovernance is Ownable {
         repairDeposit = IRepairDepositGov(_deposit);
     }
 
-    // Any active user creates a proposal
-    function createProposal(
+    function _canPropose(address proposer) internal view returns (bool) {
+        return proposer == owner() || repairDeposit.isActive(proposer);
+    }
+
+    function _createProposal(
         string memory description,
-        uint256 durationDays
-    ) external {
-        require(repairDeposit.isActive(msg.sender), "Must have active deposit");
+        ProposalAction action,
+        uint256 actionValue
+    ) internal {
+        require(_canPropose(msg.sender), "Must have active deposit or be owner");
         require(bytes(description).length > 0, "Description cannot be empty");
-        require(durationDays > 0 && durationDays <= 30, "Duration must be between 1 and 30 days");
 
         totalProposals++;
 
-        uint256 deadline = block.timestamp + (durationDays * 1 days);
+        uint256 deadline = block.timestamp + PROPOSAL_DURATION;
 
         proposals[totalProposals] = Proposal({
             id:           totalProposals,
@@ -75,10 +95,31 @@ contract RepairGovernance is Ownable {
             votesAgainst: 0,
             deadline:     deadline,
             executed:     false,
-            approved:     false
+            approved:     false,
+            action:       action,
+            actionValue:  actionValue
         });
 
         emit ProposalCreated(totalProposals, msg.sender, description, deadline);
+        emit ProposalActionConfigured(totalProposals, action, actionValue);
+    }
+
+    // Owner or active user proposes a token emission rate change
+    function createTokensPerEthProposal(
+        string memory description,
+        uint256 newRate
+    ) external {
+        require(newRate > 0, "Rate must be greater than zero");
+        _createProposal(description, ProposalAction.SetTokensPerEth, newRate);
+    }
+
+    // Owner or active user proposes a minimum deposit change
+    function createMinDepositProposal(
+        string memory description,
+        uint256 newMin
+    ) external {
+        require(newMin > 0, "Minimum deposit must be greater than zero");
+        _createProposal(description, ProposalAction.SetMinDeposit, newMin);
     }
 
     // Token holder votes on a proposal
@@ -116,6 +157,14 @@ contract RepairGovernance is Ownable {
         // Approved if quorum reached and majority voted for
         proposal.approved = totalVotes >= quorum &&
                             proposal.votesFor > proposal.votesAgainst;
+
+        if (proposal.approved) {
+            if (proposal.action == ProposalAction.SetTokensPerEth) {
+                IRepairTokenGov(address(repairToken)).setTokensPerEth(proposal.actionValue);
+            } else if (proposal.action == ProposalAction.SetMinDeposit) {
+                repairDeposit.setMinDeposit(proposal.actionValue);
+            }
+        }
 
         emit ProposalExecuted(proposalId, proposal.approved);
     }

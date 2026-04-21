@@ -12,6 +12,7 @@ describe("RepairToken", () => {
     [owner, user] = await ethers.getSigners();
     token = await (await ethers.getContractFactory("RepairToken")).deploy();
     await token.waitForDeployment();
+    await token.setGovernance(user.address);
   });
 
   describe("deploy", () => {
@@ -25,8 +26,8 @@ describe("RepairToken", () => {
       expect(balance).to.equal(ethers.parseUnits("1000000", 18));
     });
 
-    it("deve definir tokensPerEth como 1000", async () => {
-      expect(await token.tokensPerEth()).to.equal(1000);
+    it("deve definir tokensPerEth como 10000000", async () => {
+      expect(await token.tokensPerEth()).to.equal(10000000);
     });
   });
 
@@ -35,7 +36,7 @@ describe("RepairToken", () => {
       const ethAmount = ethers.parseEther("1");
       await token.connect(user).buy({ value: ethAmount });
       const balance = await token.balanceOf(user.address);
-      expect(balance).to.equal(ethers.parseUnits("1000", 18));
+      expect(balance).to.equal(ethers.parseUnits("10000000", 18));
     });
 
     it("deve falhar se não enviar ETH", async () => {
@@ -47,7 +48,7 @@ describe("RepairToken", () => {
       const ethAmount = ethers.parseEther("1");
       await expect(token.connect(user).buy({ value: ethAmount }))
         .to.emit(token, "TokensPurchased")
-        .withArgs(user.address, ethAmount, ethers.parseUnits("1000", 18));
+        .withArgs(user.address, ethAmount, ethers.parseUnits("10000000", 18));
     });
   });
 
@@ -92,18 +93,18 @@ describe("RepairToken", () => {
   });
 
   describe("setTokensPerEth", () => {
-    it("owner deve conseguir atualizar a taxa", async () => {
-      await token.setTokensPerEth(2000);
+    it("governanca deve conseguir atualizar a taxa", async () => {
+      await token.connect(user).setTokensPerEth(2000);
       expect(await token.tokensPerEth()).to.equal(2000);
     });
 
-    it("não owner não pode atualizar a taxa", async () => {
-      await expect(token.connect(user).setTokensPerEth(2000))
-        .to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+    it("não governanca não pode atualizar a taxa", async () => {
+      await expect(token.connect(owner).setTokensPerEth(2000))
+        .to.be.revertedWith("Not governance");
     });
 
     it("deve falhar se taxa for zero", async () => {
-      await expect(token.setTokensPerEth(0))
+      await expect(token.connect(user).setTokensPerEth(0))
         .to.be.revertedWith("Rate must be greater than zero");
     });
   });

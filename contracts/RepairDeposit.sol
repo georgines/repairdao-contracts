@@ -55,6 +55,9 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
     IRepairReputationDeposit public repairReputation;
     AggregatorV3Interface public immutable priceFeed;
 
+    // Address allowed to update protocol parameters
+    address public governance;
+
     // Authorized contracts that can call slash and updateRate
     mapping(address => bool) public authorizedContracts;
 
@@ -89,6 +92,7 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
     event MinDepositUpdated(uint256 newMin);
     event RepairReputationUpdated(address indexed newReputation);
     event SlashPercentUpdated(uint256 newPercent);
+    event GovernanceUpdated(address indexed newGovernance);
 
     // Constructor
     constructor(
@@ -120,6 +124,13 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         require(reputationAddress != address(0), "Invalid reputation");
         repairReputation = IRepairReputationDeposit(reputationAddress);
         emit RepairReputationUpdated(reputationAddress);
+    }
+
+    // Owner configures the governance contract allowed to update parameters
+    function setGovernance(address newGovernance) external onlyOwner {
+        require(newGovernance != address(0), "Invalid governance");
+        governance = newGovernance;
+        emit GovernanceUpdated(newGovernance);
     }
 
     modifier onlyAuthorized() {
@@ -279,8 +290,9 @@ contract RepairDeposit is Ownable, ReentrancyGuard, IRepairDeposit {
         return deposits[user];
     }
 
-    // Owner updates minimum deposit
-    function setMinDeposit(uint256 newMin) external onlyOwner {
+    // Governance updates minimum deposit
+    function setMinDeposit(uint256 newMin) external {
+        require(msg.sender == governance, "Not governance");
         minDeposit = newMin;
         emit MinDepositUpdated(newMin);
     }

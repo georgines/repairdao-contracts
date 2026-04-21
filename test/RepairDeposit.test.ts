@@ -35,6 +35,7 @@ describe("RepairDeposit", () => {
       await priceFeed.getAddress()
     );
     await deposit.waitForDeployment();
+    await deposit.setGovernance(authorized.address);
 
     reputation = await (await ethers.getContractFactory("RepairReputation")).deploy(
       await badge.getAddress(),
@@ -184,14 +185,14 @@ describe("RepairDeposit", () => {
   });
 
   describe("setMinDeposit", () => {
-    it("owner deve conseguir atualizar minimo", async () => {
-      await deposit.setMinDeposit(ethers.parseUnits("200", 18));
+    it("governanca deve conseguir atualizar minimo", async () => {
+      await deposit.connect(authorized).setMinDeposit(ethers.parseUnits("200", 18));
       expect(await deposit.minDeposit()).to.equal(ethers.parseUnits("200", 18));
     });
 
-    it("nao owner nao pode atualizar", async () => {
+    it("nao governanca nao pode atualizar", async () => {
       await expect(deposit.connect(user).setMinDeposit(200))
-        .to.be.revertedWithCustomError(deposit, "OwnableUnauthorizedAccount");
+        .to.be.revertedWith("Not governance");
     });
   });
 });

@@ -11,17 +11,28 @@ contract RepairToken is ERC20, Ownable {
     uint256 private constant INITIAL_SUPPLY = 1_000_000;
 
     // How many tokens per 1 ETH
-    uint256 public tokensPerEth = 1000;
+    uint256 public tokensPerEth = 10_000_000;
+
+    // Address allowed to update protocol parameters
+    address public governance;
 
     // Events
     event TokensPurchased(address indexed buyer, uint256 ethAmount, uint256 tokenAmount);
     event TokensBurned(address indexed burner, uint256 amount);
     event RateUpdated(uint256 newRate);
+    event GovernanceUpdated(address indexed newGovernance);
     // Fix: reentrancy-events — receiver instead of owner() after external call
     event EthWithdrawn(address indexed receiver, uint256 amount);
 
     constructor() ERC20("RepairToken", "RPT") Ownable(msg.sender) {
         _mint(msg.sender, INITIAL_SUPPLY * 10 ** decimals());
+    }
+
+    // Owner configures the governance contract allowed to update parameters
+    function setGovernance(address newGovernance) external onlyOwner {
+        require(newGovernance != address(0), "Invalid governance");
+        governance = newGovernance;
+        emit GovernanceUpdated(newGovernance);
     }
 
     // User sends ETH and receives RPT tokens
@@ -46,8 +57,9 @@ contract RepairToken is ERC20, Ownable {
         emit TokensBurned(msg.sender, amount);
     }
 
-    // Owner updates the conversion rate
-    function setTokensPerEth(uint256 newRate) external onlyOwner {
+    // Governance updates the conversion rate
+    function setTokensPerEth(uint256 newRate) external {
+        require(msg.sender == governance, "Not governance");
         require(newRate > 0, "Rate must be greater than zero");
         tokensPerEth = newRate;
         emit RateUpdated(newRate);

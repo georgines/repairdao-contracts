@@ -56,6 +56,8 @@ describe("RepairGovernance", () => {
       await deposit.getAddress()
     );
     await governance.waitForDeployment();
+    await token.setGovernance(await governance.getAddress());
+    await deposit.setGovernance(await governance.getAddress());
 
     // Autorizações
     await badge.authorizeContract(await reputation.getAddress());
@@ -80,46 +82,54 @@ describe("RepairGovernance", () => {
     });
   });
 
-  describe("createProposal", () => {
-    it("usuario com deposito deve conseguir criar proposta", async () => {
-      await governance.connect(user).createProposal("Aumentar taxa de recompensa", 1);
+  describe("proposal creation", () => {
+    it("usuario com deposito deve conseguir criar proposta de token", async () => {
+      await governance.connect(user).createTokensPerEthProposal("Aumentar taxa do token", 25_000_000);
       const proposal = await governance.getProposal(1);
-      expect(proposal.description).to.equal("Aumentar taxa de recompensa");
+      expect(proposal.description).to.equal("Aumentar taxa do token");
       expect(proposal.proposer).to.equal(user.address);
     });
 
     it("deve emitir evento ProposalCreated", async () => {
-      await expect(governance.connect(user).createProposal("Proposta teste", 1))
+      await expect(governance.connect(user).createTokensPerEthProposal("Proposta teste", 25_000_000))
         .to.emit(governance, "ProposalCreated");
     });
 
-    it("deve falhar sem deposito ativo", async () => {
-      await expect(governance.connect(user3).createProposal("Proposta teste", 1))
-        .to.be.revertedWith("Must have active deposit");
+    it("owner tambem pode propor sem deposito ativo", async () => {
+      await governance.connect(owner).createMinDepositProposal("Ajustar minimo", ethers.parseUnits("150", 18));
+      const proposal = await governance.getProposal(1);
+      expect(proposal.proposer).to.equal(owner.address);
     });
 
     it("deve falhar com descricao vazia", async () => {
-      await expect(governance.connect(user).createProposal("", 1))
+      await expect(governance.connect(user).createTokensPerEthProposal("", 25_000_000))
         .to.be.revertedWith("Description cannot be empty");
     });
 
-    it("deve falhar com duracao invalida", async () => {
-      await expect(governance.connect(user).createProposal("Proposta", 0))
-        .to.be.revertedWith("Duration must be between 1 and 30 days");
-      await expect(governance.connect(user).createProposal("Proposta", 31))
-        .to.be.revertedWith("Duration must be between 1 and 30 days");
+    it("deve falhar sem deposito ativo e sem ser owner", async () => {
+      await expect(governance.connect(user3).createMinDepositProposal("Proposta teste", ethers.parseUnits("150", 18)))
+        .to.be.revertedWith("Must have active deposit or be owner");
     });
 
     it("deve incrementar totalProposals", async () => {
-      await governance.connect(user).createProposal("Proposta 1", 1);
-      await governance.connect(user).createProposal("Proposta 2", 1);
+      await governance.connect(user).createTokensPerEthProposal("Proposta 1", 25_000_000);
+      await governance.connect(user).createMinDepositProposal("Proposta 2", ethers.parseUnits("150", 18));
       expect(await governance.totalProposals()).to.equal(2);
+    });
+
+    it("deve criar proposta com prazo fixo de 5 minutos", async () => {
+      const before = BigInt((await time.latest()).toString());
+      await governance.connect(user).createTokensPerEthProposal("Proposta prazo", 25_000_000);
+      const proposal = await governance.getProposal(1);
+      const delta = proposal.deadline - before;
+      expect(delta).to.be.gte(300n);
+      expect(delta).to.be.lte(301n);
     });
   });
 
   describe("vote", () => {
     beforeEach(async () => {
-      await governance.connect(user).createProposal("Proposta teste", 1);
+      await governance.connect(user).createTokensPerEthProposal("Proposta teste", 25_000_000);
     });
 
     it("detentor de tokens deve conseguir votar a favor", async () => {
@@ -152,7 +162,7 @@ describe("RepairGovernance", () => {
     });
 
     it("deve falhar apos prazo", async () => {
-      await time.increase(2 * 24 * 60 * 60); // 2 dias
+      await time.increase(6 * 60); // 6 minutos
       await expect(governance.connect(user2).vote(1, true))
         .to.be.revertedWith("Voting period ended");
     });
@@ -160,20 +170,20 @@ describe("RepairGovernance", () => {
 
   describe("executeProposal", () => {
     beforeEach(async () => {
-      await governance.connect(user).createProposal("Proposta teste", 1);
+      await governance.connect(user).createTokensPerEthProposal("Proposta teste", 25_000_000);
     });
 
     it("deve executar proposta apos prazo", async () => {
       await governance.connect(user2).vote(1, true);
       await governance.connect(user3).vote(1, true);
-      await time.increase(2 * 24 * 60 * 60);
+      await time.increase(6 * 60);
       await governance.executeProposal(1);
       const proposal = await governance.getProposal(1);
       expect(proposal.executed).to.be.true;
     });
 
     it("deve emitir evento ProposalExecuted", async () => {
-      await time.increase(2 * 24 * 60 * 60);
+      await time.increase(6 * 60);
       await expect(governance.executeProposal(1))
         .to.emit(governance, "ProposalExecuted");
     });
@@ -184,14 +194,14 @@ describe("RepairGovernance", () => {
     });
 
     it("deve falhar se ja executada", async () => {
-      await time.increase(2 * 24 * 60 * 60);
+      await time.increase(6 * 60);
       await governance.executeProposal(1);
       await expect(governance.executeProposal(1))
         .to.be.revertedWith("Already executed");
     });
 
     it("proposta sem quorum nao deve ser aprovada", async () => {
-      await time.increase(2 * 24 * 60 * 60);
+      await time.increase(6 * 60);
       await governance.executeProposal(1);
       const proposal = await governance.getProposal(1);
       expect(proposal.approved).to.be.false;
@@ -207,6 +217,36 @@ describe("RepairGovernance", () => {
     it("nao owner nao pode atualizar quorum", async () => {
       await expect(governance.connect(user).setQuorum(100))
         .to.be.revertedWithCustomError(governance, "OwnableUnauthorizedAccount");
+    });
+  });
+
+  describe("governance actions", () => {
+    it("deve atualizar tokensPerEth via proposta aprovada", async () => {
+      await governance.connect(user).createTokensPerEthProposal("Ajustar taxa do token", 25_000_000);
+      await governance.connect(user2).vote(1, true);
+      await governance.connect(user3).vote(1, true);
+      await time.increase(6 * 60);
+
+      await governance.executeProposal(1);
+
+      expect(await token.tokensPerEth()).to.equal(25_000_000);
+      const proposal = await governance.getProposal(1);
+      expect(proposal.approved).to.be.true;
+      expect(proposal.executed).to.be.true;
+    });
+
+    it("deve atualizar minDeposit via proposta aprovada", async () => {
+      await governance.connect(user).createMinDepositProposal("Ajustar minimo do deposito", ethers.parseUnits("150", 18));
+      await governance.connect(user2).vote(1, true);
+      await governance.connect(user3).vote(1, true);
+      await time.increase(6 * 60);
+
+      await governance.executeProposal(1);
+
+      expect(await deposit.minDeposit()).to.equal(ethers.parseUnits("150", 18));
+      const proposal = await governance.getProposal(1);
+      expect(proposal.approved).to.be.true;
+      expect(proposal.executed).to.be.true;
     });
   });
 });
