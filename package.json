@@ -34,6 +34,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "coverage": "hardhat coverage",
+    "audit": "node scripts/audit.js",
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",        
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia", 
     "audit:mythril-docker": "node scripts/audit-mythril-docker.js",
