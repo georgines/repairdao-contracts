@@ -1,0 +1,165 @@
+'npx hardhat clean' running (wd: C:\Users\Usuario\Herd\projeto\repairdao-contracts)
+'npx hardhat clean --global' running (wd: C:\Users\Usuario\Herd\projeto\repairdao-contracts)
+Problem deserializing hardhat configuration, using defaults: Expecting value: line 1 column 1 (char 0)
+'npx hardhat compile --force' running (wd: C:\Users\Usuario\Herd\projeto\repairdao-contracts)
+INFO:Detectors:
+Detector: calls-loop
+RepairEscrow.resolveDispute(uint256) (contracts/RepairEscrow.sol#331-373) has external calls inside a loop: repairReputation.reward(voter) (contracts/RepairEscrow.sol#364)
+RepairEscrow.resolveDispute(uint256) (contracts/RepairEscrow.sol#331-373) has external calls inside a loop: repairDeposit.slash(voter,5) (contracts/RepairEscrow.sol#366)
+RepairEscrow.resolveDispute(uint256) (contracts/RepairEscrow.sol#331-373) has external calls inside a loop: repairReputation.penalize(voter) (contracts/RepairEscrow.sol#367)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+INFO:Detectors:
+Detector: reentrancy-events
+Reentrancy in RepairGovernance.executeProposal(uint256) (contracts/RepairGovernance.sol#147-170):
+	External calls:
+	- IRepairTokenGov(address(repairToken)).setTokensPerEth(proposal.actionValue) (contracts/RepairGovernance.sol#163)
+	- repairDeposit.setMinDeposit(proposal.actionValue) (contracts/RepairGovernance.sol#165)
+	Event emitted after the call(s):
+	- ProposalExecuted(proposalId,proposal.approved) (contracts/RepairGovernance.sol#169)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-4
+INFO:Detectors:
+Detector: timestamp
+RepairDeposit.deposit(uint256,bool) (contracts/RepairDeposit.sol#163-182) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(! deposits[msg.sender].active,Already has active deposit) (contracts/RepairDeposit.sol#165)
+RepairDeposit.withdrawRewards() (contracts/RepairDeposit.sol#206-228) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(deposits[msg.sender].active,No active deposit) (contracts/RepairDeposit.sol#207)
+	- rewards > availableRewards (contracts/RepairDeposit.sol#217)
+	- require(bool,string)(rewards > 0,No rewards to claim) (contracts/RepairDeposit.sol#221)
+	- availableBalance > principal (contracts/RepairDeposit.sol#213-215)
+RepairDeposit.withdrawDeposit() (contracts/RepairDeposit.sol#231-262) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(deposits[msg.sender].active,No active deposit) (contracts/RepairDeposit.sol#232)
+	- rewards > availableRewards (contracts/RepairDeposit.sol#242)
+RepairDeposit.slash(address,uint256) (contracts/RepairDeposit.sol#265-275) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(deposits[user].active,No active deposit) (contracts/RepairDeposit.sol#266)
+RepairEscrow.submitBudget(uint256,uint256) (contracts/RepairEscrow.sol#160-174) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.state == ServiceState.Open,Order is not open) (contracts/RepairEscrow.sol#163)
+	- require(bool,string)(order.client != msg.sender,Client cannot be technician) (contracts/RepairEscrow.sol#164)
+RepairEscrow.acceptBudget(uint256) (contracts/RepairEscrow.sol#177-189) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.client == msg.sender,Not the client) (contracts/RepairEscrow.sol#179)
+	- require(bool,string)(order.state == ServiceState.Budgeted,No budget submitted) (contracts/RepairEscrow.sol#180)
+RepairEscrow.completeOrder(uint256) (contracts/RepairEscrow.sol#192-200) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.technician == msg.sender,Not the technician) (contracts/RepairEscrow.sol#194)
+	- require(bool,string)(order.state == ServiceState.InProgress,Order is not in progress) (contracts/RepairEscrow.sol#195)
+RepairEscrow.confirmCompletion(uint256) (contracts/RepairEscrow.sol#203-219) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.client == msg.sender,Not the client) (contracts/RepairEscrow.sol#205)
+	- require(bool,string)(order.state == ServiceState.Completed,Order is not completed) (contracts/RepairEscrow.sol#206)
+RepairEscrow.rateUser(uint256,uint8) (contracts/RepairEscrow.sol#222-244) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.state == ServiceState.Completed || order.state == ServiceState.Resolved,Order not completed or resolved) (contracts/RepairEscrow.sol#224-228)
+	- require(bool,string)(! order.clientRated,Client already rated) (contracts/RepairEscrow.sol#232)
+	- require(bool,string)(! order.technicianRated,Technician already rated) (contracts/RepairEscrow.sol#237)
+RepairEscrow.openDispute(uint256,string) (contracts/RepairEscrow.sol#247-278) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(msg.sender == order.client || msg.sender == order.technician,Not authorized) (contracts/RepairEscrow.sol#249-252)
+	- require(bool,string)(order.state == ServiceState.InProgress || order.state == ServiceState.Completed,Cannot dispute at this stage) (contracts/RepairEscrow.sol#253-257)
+RepairEscrow.submitEvidence(uint256,string) (contracts/RepairEscrow.sol#281-298) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(msg.sender == order.client || msg.sender == order.technician,Not authorized) (contracts/RepairEscrow.sol#283-286)
+	- require(bool,string)(order.state == ServiceState.Disputed,No active dispute) (contracts/RepairEscrow.sol#287)
+	- require(bool,string)(block.timestamp < disputes[orderId].deadline,Voting period ended) (contracts/RepairEscrow.sol#288)
+RepairEscrow.voteOnDispute(uint256,bool) (contracts/RepairEscrow.sol#301-327) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.state == ServiceState.Disputed,No active dispute) (contracts/RepairEscrow.sol#305)
+	- require(bool,string)(block.timestamp < dispute.deadline,Voting period ended) (contracts/RepairEscrow.sol#306)
+	- require(bool,string)(msg.sender != order.client && msg.sender != order.technician,Involved parties cannot vote) (contracts/RepairEscrow.sol#308-311)
+RepairEscrow.resolveDispute(uint256) (contracts/RepairEscrow.sol#331-373) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(order.state == ServiceState.Disputed,No active dispute) (contracts/RepairEscrow.sol#335)
+	- require(bool,string)(block.timestamp >= dispute.deadline,Voting period not ended) (contracts/RepairEscrow.sol#336)
+	- require(bool,string)(! dispute.resolved,Already resolved) (contracts/RepairEscrow.sol#337)
+RepairGovernance.vote(uint256,bool) (contracts/RepairGovernance.sol#126-144) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(block.timestamp < proposal.deadline,Voting period ended) (contracts/RepairGovernance.sol#129)
+RepairGovernance.executeProposal(uint256) (contracts/RepairGovernance.sol#147-170) uses timestamp for comparisons
+	Dangerous comparisons:
+	- require(bool,string)(block.timestamp >= proposal.deadline,Voting period not ended) (contracts/RepairGovernance.sol#150)
+	- require(bool,string)(! proposal.executed,Already executed) (contracts/RepairGovernance.sol#151)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Detector: pragma
+6 different versions of Solidity are used:
+	- Version constraint ^0.8.20 is used by:
+		-^0.8.20 (node_modules/@openzeppelin/contracts/access/Ownable.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC721/utils/ERC721Utils.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/Context.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/Panic.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#5)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/Math.sol#4)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/SafeCast.sol#5)
+		-^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol#4)
+		-^0.8.20 (contracts/RepairBadge.sol#2)
+		-^0.8.20 (contracts/RepairDeposit.sol#2)
+		-^0.8.20 (contracts/RepairEscrow.sol#2)
+		-^0.8.20 (contracts/RepairGovernance.sol#2)
+		-^0.8.20 (contracts/RepairReputation.sol#2)
+		-^0.8.20 (contracts/RepairToken.sol#2)
+		-^0.8.20 (contracts/mocks/MockPriceFeed.sol#2)
+	- Version constraint >=0.6.2 is used by:
+		->=0.6.2 (node_modules/@openzeppelin/contracts/interfaces/IERC1363.sol#4)
+		->=0.6.2 (node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol#4)
+		->=0.6.2 (node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol#4)
+		->=0.6.2 (node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol#4)
+	- Version constraint >=0.4.16 is used by:
+		->=0.4.16 (node_modules/@openzeppelin/contracts/interfaces/IERC165.sol#4)
+		->=0.4.16 (node_modules/@openzeppelin/contracts/interfaces/IERC20.sol#4)
+		->=0.4.16 (node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol#4)
+		->=0.4.16 (node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol#4)
+	- Version constraint >=0.8.4 is used by:
+		->=0.8.4 (node_modules/@openzeppelin/contracts/interfaces/draft-IERC6093.sol#4)
+	- Version constraint ^0.8.24 is used by:
+		-^0.8.24 (node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol#4)
+		-^0.8.24 (node_modules/@openzeppelin/contracts/utils/Bytes.sol#4)
+		-^0.8.24 (node_modules/@openzeppelin/contracts/utils/Strings.sol#4)
+	- Version constraint >=0.5.0 is used by:
+		->=0.5.0 (node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol#4)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#different-pragma-directives-are-used
+INFO:Detectors:
+Detector: solc-version
+Version constraint ^0.8.20 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)
+	- VerbatimInvalidDeduplication
+	- FullInlinerNonExpressionSplitArgumentEvaluationOrder
+	- MissingSideEffectsOnSelectorAccess.
+It is used by:
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/access/Ownable.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC721/utils/ERC721Utils.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/Context.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/Panic.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#5)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/Math.sol#4)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/SafeCast.sol#5)
+	- ^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol#4)
+	- ^0.8.20 (contracts/RepairBadge.sol#2)
+	- ^0.8.20 (contracts/RepairDeposit.sol#2)
+	- ^0.8.20 (contracts/RepairEscrow.sol#2)
+	- ^0.8.20 (contracts/RepairGovernance.sol#2)
+	- ^0.8.20 (contracts/RepairReputation.sol#2)
+	- ^0.8.20 (contracts/RepairToken.sol#2)
+	- ^0.8.20 (contracts/mocks/MockPriceFeed.sol#2)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+INFO:Detectors:
+Detector: low-level-calls
+Low level call in RepairToken.withdraw() (contracts/RepairToken.sol#70-77):
+	- (success,None) = address(receiver).call{value: balance}() (contracts/RepairToken.sol#75)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+INFO:Detectors:
+Detector: missing-inheritance
+RepairReputation (contracts/RepairReputation.sol#34-292) should inherit from IRepairReputationDeposit (contracts/RepairDeposit.sol#16-20)
+RepairToken (contracts/RepairToken.sol#8-78) should inherit from IRepairTokenGov (contracts/RepairGovernance.sol#7-9)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-inheritance
+INFO:Slither:. analyzed (44 contracts with 101 detectors), 24 result(s) found

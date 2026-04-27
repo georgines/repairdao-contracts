@@ -1,0 +1,306 @@
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: fallback
+PC address: 257
+Estimated Gas Usage: 69 - 164
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [CREATOR], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000021, decoded_data: , value: 0x0
+
+==== Dependence on predictable environment variable ====
+SWC ID: 116
+Severity: Low
+Contract: MAIN
+Function name: executeProposal(uint256)
+PC address: 1084
+Estimated Gas Usage: 1342 - 1627
+A control flow decision is made based on The block.timestamp environment variable.
+The block.timestamp environment variable is used to determine a control flow decision. Note that the values of variables like coinbase, gaslimit, block number and timestamp are predictable and can be manipulated by a malicious miner. Also keep in mind that attackers know hashes of earlier blocks. Don't use any of those environment variables as sources of randomness and be aware that use of these variables introduces a certain level of trust into miners.
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [CREATOR], function: executeProposal(uint256), txdata: 0x0d61b5190000000000000000000000000000000000000000000000000000000000000000, decoded_data: (0,), value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: executeProposal(uint256)
+PC address: 1223
+Estimated Gas Usage: 2507 - 3688
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: executeProposal(uint256), txdata: 0x0d61b5190000000000008000000000000000000080000000040000008000000000000004, decoded_data: (205688069665150755269371317960852274830013763400253510556581892,), value: 0x0
+Caller: [CREATOR], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006, decoded_data: , value: 0x0
+
+==== Dependence on predictable environment variable ====
+SWC ID: 116
+Severity: Low
+Contract: MAIN
+Function name: vote(uint256,bool)
+PC address: 2524
+Estimated Gas Usage: 1557 - 1842
+A control flow decision is made based on The block.timestamp environment variable.
+The block.timestamp environment variable is used to determine a control flow decision. Note that the values of variables like coinbase, gaslimit, block number and timestamp are predictable and can be manipulated by a malicious miner. Also keep in mind that attackers know hashes of earlier blocks. Don't use any of those environment variables as sources of randomness and be aware that use of these variables introduces a certain level of trust into miners.
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [SOMEGUY], function: vote(uint256,bool), txdata: 0xc9d27afe00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001, decoded_data: (0, True), value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: vote(uint256,bool)
+PC address: 2582
+Estimated Gas Usage: 1861 - 2712
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000008080200101010840800280108001010420808001204008010200400102010440, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe000820d
+PC address: 3309
+Estimated Gas Usage: 1455 - 4798
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000100800000208000008080808080808080800000000000000000000000000000, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe57e8d98
+PC address: 3390
+Estimated Gas Usage: 1492 - 4930
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000008080808080808080808080808080808080808080808080808080808080800102, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: transferOwnership(address)
+PC address: 3526
+Estimated Gas Usage: 1764 - 2565
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [SOMEGUY], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe000820d
+PC address: 4005
+Estimated Gas Usage: 2465 - 6231
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000008080808080808080808080808080808080808080808080808080808080808008, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: proposals(uint256)
+PC address: 4944
+Estimated Gas Usage: 240 - 335
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000080080000000000000004004000008000000000020000000000000000000001, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe000820d
+PC address: 4948
+Estimated Gas Usage: 300 - 395
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [SOMEGUY], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000080002020008000100001000000010000400040002080040010000000000000, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: transferOwnership(address)
+PC address: 5578
+Estimated Gas Usage: 462 - 557
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [SOMEGUY], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000008020202040401020101010101008080808080404040402048080808080800101, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: vote(uint256,bool)
+PC address: 6227
+Estimated Gas Usage: 587 - 682
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002040408080808020, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe000820d
+PC address: 6373
+Estimated Gas Usage: 358 - 453
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000002080808080080880808020014010104040408080808010018010104080200801, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe000820d
+PC address: 6377
+Estimated Gas Usage: 827 - 1205
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000001e40000200000000000000000000000000000000000000000100000000000000, decoded_data: , value: 0x0
+
+==== requirement violation ====
+SWC ID: 123
+Severity: Medium
+Contract: MAIN
+Function name: _function_0xe000820d
+PC address: 6422
+Estimated Gas Usage: 462 - 747
+A requirement was violated in a nested call and the call was reverted as a result.
+Make sure valid inputs are provided to the nested call (for instance, via passed arguments).
+--------------------
+Initial State:
+
+Account: [ATTACKER], balance: 0x0, nonce:0, storage:{}
+Account: [SOMEGUY], balance: 0x0, nonce:0, storage:{}
+
+Transaction Sequence:
+
+Caller: [ATTACKER], function: unknown, txdata: 0xe000820d00000000000000000000000000000000000000000000000000000000000000000102010101010104020101010102010201020101104008004004400440044004, decoded_data: , value: 0x0
+
+

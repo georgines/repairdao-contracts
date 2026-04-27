@@ -1,0 +1,7 @@
+yarn run v1.22.22
+$ C:\Users\Usuario\Herd\projeto\repairdao-contracts\node_modules\.bin\hardhat compile --force
+◇ injected env (8) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+Generating typings for: 44 artifacts in dir: typechain-types for target: ethers-v6
+Successfully generated 120 typings!
+Compiled 32 Solidity files successfully (evm target: cancun).
+Done in 3.56s.

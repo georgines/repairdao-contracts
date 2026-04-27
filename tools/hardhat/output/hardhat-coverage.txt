@@ -1,0 +1,308 @@
+yarn run v1.22.22
+$ C:\Users\Usuario\Herd\projeto\repairdao-contracts\node_modules\.bin\hardhat coverage
+◇ injected env (8) from .env // tip: ⌘ enable debugging { debug: true }
+
+Version
+=======
+> solidity-coverage: v0.8.17
+
+Instrumenting for coverage...
+=============================
+
+> mocks\MockPriceFeed.sol
+> RepairBadge.sol
+> RepairDeposit.sol
+> RepairEscrow.sol
+> RepairGovernance.sol
+> RepairReputation.sol
+> RepairToken.sol
+
+Compilation:
+============
+
+Generating typings for: 44 artifacts in dir: typechain-types for target: ethers-v6
+Successfully generated 120 typings!
+Compiled 32 Solidity files successfully (evm target: cancun).
+
+Network Info
+============
+> HardhatEVM: v2.28.6
+> network:    hardhat
+
+
+
+  Coverage helpers
+    √ MockPriceFeed decimals and setPrice
+    √ RepairBadge getBadgeLevel and edge cases (52ms)
+
+  deploy script
+    - shows start and completion logs and writes deployment addresses
+
+  RepairDeposit coverage extras
+    √ setSlashPercent: owner success and non-owner fails
+    √ withdrawRewards should revert when no rewards available
+    √ getRewards should return zero for inactive accounts
+    √ getRewards should use a custom rate when one is set
+    √ withdrawDeposit should still work after the badge is burned externally
+
+  RepairBadge
+    deploy
+      √ deve ter nome e simbolo corretos
+      √ deve definir owner corretamente
+    authorizeContract
+      √ owner deve conseguir autorizar contrato
+      √ nao owner nao pode autorizar
+    owner path
+      √ owner deve poder chamar os caminhos autorizados diretamente
+    mintBadge
+      √ autorizado deve conseguir mintar badge
+      √ deve emitir evento BadgeMinted
+      √ deve falhar para endereco zero
+      √ deve falhar se usuario ja tem badge
+      √ nao autorizado nao pode mintar
+    burnBadge
+      √ autorizado deve conseguir queimar badge
+      √ deve emitir evento BadgeBurned
+      √ deve falhar se usuario nao tem badge
+    updateBadge
+      √ deve atualizar nivel do badge
+      √ deve emitir evento BadgeUpdated
+      √ deve falhar para nivel invalido
+      √ deve falhar se usuario nao tem badge
+    getLevelName
+      √ deve retornar nome correto para cada nivel (55ms)
+      √ deve retornar None para usuario sem badge
+    soulbound
+      √ deve bloquear transferencia
+      √ deve bloquear approve
+      √ deve bloquear setApprovalForAll
+
+  RepairDeposit
+    deploy
+      √ deve definir minDeposit corretamente
+      √ deve definir taxas por nivel corretamente
+    deposit
+      √ deve depositar tokens e ativar conta
+      √ deve emitir evento Deposited
+      √ deve falhar se abaixo do minimo
+      √ deve falhar se ja tem deposito ativo
+      √ deve salvar perfil correto (tecnico)
+      √ deve salvar perfil correto (cliente)
+    withdrawDeposit
+      √ deve sacar deposito e desativar conta
+      √ deve emitir evento DepositWithdrawn
+      √ deve falhar se nao tem deposito ativo
+    slash
+      √ autorizado deve conseguir slash
+      √ deve emitir evento UserSlashed
+      √ deve falhar para percent invalido
+      √ nao autorizado nao pode slash
+    updateRate
+      √ autorizado deve atualizar taxa
+      √ deve emitir evento RateUpdated
+    getEthUsdPrice
+      √ deve retornar preco do ETH/USD
+    setMinDeposit
+      √ governanca deve conseguir atualizar minimo
+      √ nao governanca nao pode atualizar
+
+  RepairEscrow
+    createOrder
+      √ cliente deve conseguir criar ordem
+      √ deve emitir evento OrderCreated
+      √ deve falhar sem deposito ativo
+      √ deve falhar com descricao vazia
+    submitBudget
+      √ tecnico deve conseguir enviar orcamento
+      √ deve emitir evento BudgetSubmitted
+      √ deve falhar sem deposito ativo
+      √ cliente nao pode ser tecnico
+      √ deve falhar com amount zero
+    acceptBudget
+      √ cliente deve conseguir aceitar orcamento
+      √ deve emitir evento BudgetAccepted
+      √ nao cliente nao pode aceitar
+    completeOrder
+      √ tecnico deve conseguir marcar como concluido
+      √ deve emitir evento OrderCompleted
+      √ nao tecnico nao pode completar
+    confirmCompletion
+      √ cliente deve conseguir confirmar conclusao
+      √ deve emitir evento PaymentReleased
+      √ nao cliente nao pode confirmar
+    rateUser
+      √ cliente deve conseguir avaliar tecnico
+      √ tecnico deve conseguir avaliar cliente
+      √ deve falhar para rating invalido
+      √ deve falhar se ja avaliou
+      √ deve falhar para terceiros nao envolvidos
+    openDispute
+      √ cliente deve conseguir abrir disputa
+      √ deve emitir evento DisputeOpened
+      √ deve falhar com motivo vazio
+      √ terceiros nao podem abrir disputa
+    submitEvidence
+      √ cliente deve conseguir submeter evidencia
+      √ tecnico deve conseguir submeter evidencia
+      √ deve falhar com conteudo vazio
+      √ deve retornar as evidencias registradas
+    voteOnDispute
+      √ detentor de tokens deve conseguir votar
+      √ deve falhar se ja votou
+      √ partes envolvidas nao podem votar
+      √ sem tokens nao pode votar
+    resolveDispute - opener loses
+      √ deve resolver com o opposing party vencendo quando o opener perde (49ms)
+    getClientOrders e getTechnicianOrders
+      √ deve retornar ordens do cliente
+      √ deve retornar ordens do tecnico
+    setVotingPeriod e setSlashPercent
+      √ owner deve conseguir atualizar periodo e slash percent valido
+      √ deve falhar para slash percent invalido
+
+  RepairGovernance
+    deploy
+      √ deve definir token e deposit corretamente
+      √ deve definir quorum inicial corretamente
+    proposal creation
+      √ usuario com deposito deve conseguir criar proposta de token
+      √ deve emitir evento ProposalCreated
+      √ owner tambem pode propor sem deposito ativo
+      √ deve falhar com descricao vazia
+      √ deve falhar sem deposito ativo e sem ser owner
+      √ deve incrementar totalProposals
+      √ deve criar proposta com prazo fixo de 5 minutos
+    vote
+      √ detentor de tokens deve conseguir votar a favor
+      √ detentor de tokens deve conseguir votar contra
+      √ deve emitir evento VoteCast
+      √ deve falhar se ja votou
+      √ deve falhar sem tokens
+      √ deve falhar apos prazo
+    executeProposal
+      √ deve executar proposta apos prazo
+      √ deve emitir evento ProposalExecuted
+      √ deve falhar antes do prazo
+      √ deve falhar se ja executada
+      √ proposta sem quorum nao deve ser aprovada
+    setQuorum
+      √ owner deve conseguir atualizar quorum
+      √ nao owner nao pode atualizar quorum
+    governance actions
+      √ deve atualizar tokensPerEth via proposta aprovada
+      √ deve atualizar minDeposit via proposta aprovada
+
+  RepairReputation
+    deploy
+      √ deve definir badge e deposit corretamente
+    registerUser
+      √ autorizado deve registrar usuario no nivel 1
+      √ deve emitir evento UserRegistered
+      √ deve falhar para endereco zero
+      √ deve falhar se usuario ja registrado
+      √ nao autorizado nao pode registrar
+    rate
+      √ deve permitir avaliar diretamente via rate (47ms)
+      √ deve aplicar penalizacao com pontos baixos (44ms)
+    penalize
+      √ deve penalizar usuario
+      √ deve emitir evento UserPenalized
+      √ deve falhar se usuario nao registrado
+    reward
+      √ deve recompensar usuario
+      √ deve emitir evento UserRewarded
+      √ deve falhar se usuario nao registrado
+    getAverageRating
+      √ deve retornar zero para usuario sem avaliacoes
+      √ deve retornar media para usuario com avaliacoes (47ms)
+    getReputation
+      √ deve retornar dados de reputacao do usuario
+    getUserRate
+      √ deve retornar a taxa do nivel atual do usuario
+    niveis
+      √ deve subir de nivel com pontos suficientes (132ms)
+
+  RepairToken
+    deploy
+      √ deve ter nome e simbolo corretos
+      √ deve mintar 1 milhão de tokens para o owner
+      √ deve definir tokensPerEth como 10000000
+    buy
+      √ deve receber ETH e mintar tokens
+      √ deve falhar se não enviar ETH
+      √ deve emitir evento TokensPurchased
+    mint
+      √ owner deve conseguir mintar tokens
+      √ não owner não pode mintar
+      √ deve falhar para endereço zero
+    burn
+      √ deve queimar tokens do próprio usuário
+      √ deve falhar se amount for zero
+      √ deve emitir evento TokensBurned
+    setTokensPerEth
+      √ governanca deve conseguir atualizar a taxa
+      √ não governanca não pode atualizar a taxa
+      √ deve falhar se taxa for zero
+    withdraw
+      √ owner deve conseguir sacar ETH acumulado
+      √ deve falhar se não houver ETH
+      √ não owner não pode sacar
+
+  Role change and badge reset
+    √ falha ao redepositar como tecnico sem reset de reputacao (usuario ja registrado) (50ms)
+    √ sucesso ao mudar para tecnico e resetar badge usando novo contrato de reputacao (62ms)
+
+  Regras de negocio principais
+    √ deve emitir badge nivel 1 automaticamente ao depositar o valor minimo (161ms)
+    √ nao deve aumentar o nivel apenas porque o usuario depositou mais tokens
+    √ deve subir o nivel do tecnico conforme recebe avaliacoes positivas (177ms)
+    √ nao deve passar do nivel maximo 5 mesmo recebendo mais avaliacoes (742ms)
+    √ nao deve cair abaixo do nivel minimo 1 mesmo recebendo penalizacoes (84ms)
+    √ deve impedir que a mesma cliente avalie duas vezes o mesmo servico (38ms)
+    √ deve reduzir a reputacao do cliente quando o tecnico avalia negativamente (218ms)
+    √ deve impedir que o tecnico avalie o mesmo cliente duas vezes no mesmo servico (40ms)
+
+  Disputa - cliente vence
+    √ deve abrir disputa, receber evidencias, votar e resolver para o cliente (129ms)
+
+  Disputa - tecnico vence
+    √ deve abrir disputa pelo tecnico, votar e resolver para o tecnico (102ms)
+
+  Fluxos de erro
+    √ deve rejeitar operacoes fora da regra de negocio (111ms)
+
+  Fluxo completo - sucesso
+    √ deve executar o fluxo completo entre cliente e tecnico (137ms)
+
+  Fluxo de recompensas do deposito
+    √ deve acumular e sacar recompensas sem encerrar o deposito
+    √ deve permitir sacar o deposito depois de acumular recompensas
+    √ deve falhar ao sacar recompensas sem deposito ativo
+
+  Resultado dos votantes na disputa
+    √ deve recompensar votantes que apoiaram o lado vencedor (92ms)
+    √ deve punir votantes que apoiaram o lado perdedor (99ms)
+    √ deve reduzir a reputacao da parte perdedora e dos votantes do lado perdedor (174ms)
+
+
+  170 passing (16s)
+  1 pending
+
+-----------------------|----------|----------|----------|----------|----------------|
+File                   |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+-----------------------|----------|----------|----------|----------|----------------|
+ contracts\            |      100 |    87.88 |      100 |      100 |                |
+  RepairBadge.sol      |      100 |      100 |      100 |      100 |                |
+  RepairDeposit.sol    |      100 |    83.33 |      100 |      100 |                |
+  RepairEscrow.sol     |      100 |    88.37 |      100 |      100 |                |
+  RepairGovernance.sol |      100 |    89.29 |      100 |      100 |                |
+  RepairReputation.sol |      100 |    86.21 |      100 |      100 |                |
+  RepairToken.sol      |      100 |    83.33 |      100 |      100 |                |
+ contracts\mocks\      |      100 |      100 |      100 |      100 |                |
+  MockPriceFeed.sol    |      100 |      100 |      100 |      100 |                |
+-----------------------|----------|----------|----------|----------|----------------|
+All files              |      100 |    87.88 |      100 |      100 |                |
+-----------------------|----------|----------|----------|----------|----------------|
+
+> Istanbul reports written to ./coverage/ and ./coverage.json
+Done in 22.92s.
