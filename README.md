@@ -47,16 +47,10 @@ Use esse formato no `.env` quando tiver uma chave própria.
 Se preferir não usar chave em desenvolvimento, use um endpoint público:
 
 ```env
-SEPOLIA_RPC_URL=https://rpc.sepolia.org
-```
-
-ou
-
-```env
 SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 ```
 
-As RPCs públicas costumam ser suficientes para desenvolvimento e testes, mas tendem a ter mais instabilidade e limite menor do que provedores com chave própria.
+As duas opções acima apontam para a mesma rede Sepolia. A RPC pública costuma ser suficiente para desenvolvimento e testes, mas tende a ter mais instabilidade e limite menor do que provedores com chave própria.
 
 ## Instalação
 
